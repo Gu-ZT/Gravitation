@@ -68,7 +68,7 @@ public class RedstoneMassEnergyConverterBlockEntity extends SmartBlockEntity {
             new MassEnergyConverterValueBoxTransform()
         )
             .withFormatter(VALUE_FORMAT::formatted)
-            .between(1, 100)
+            .between(Gravitation.CONFIG.getRedstoneMassEnergyConverterMinMass(), Gravitation.CONFIG.getRedstoneMassEnergyConverterMaxMass())
             .withCallback(value -> {
                 this.updateMass();
                 this.oldMaxConverterValue = this.getMaxConverterValue();
