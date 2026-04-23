@@ -12,6 +12,7 @@ import dev.simulated_team.simulated.content.physics_staff.PhysicsStaffClientHand
 import net.minecraft.client.player.LocalPlayer;
 import org.joml.Vector3d;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(PhysicsStaffClientHandler.class)
@@ -26,11 +27,34 @@ public abstract class PhysicsStaffClientHandlerMixin {
         method = "onItemUsed",
         at = @At(value = "MIXINEXTRAS:EXPRESSION", ordinal = 1)
     )
-    public boolean onItemUsed(
+    public boolean onItemUsedStartDrag(
         boolean original,
         @Local(name = "player") LocalPlayer player,
         @Local(name = "subLevel") SubLevel subLevel
     ) {
+        return this.gravitation$onItemUsedUtil(original, player, subLevel);
+    }
+
+    @Definition(id = "action", local = @Local(type = PhysicsStaffAction.class, argsOnly = true))
+    @Definition(
+        id = "LOCK",
+        field = "Ldev/simulated_team/simulated/content/physics_staff/PhysicsStaffAction;LOCK:Ldev/simulated_team/simulated/content/physics_staff/PhysicsStaffAction;"
+    )
+    @Expression("action == LOCK")
+    @ModifyExpressionValue(
+        method = "onItemUsed",
+        at = @At(value = "MIXINEXTRAS:EXPRESSION", ordinal = 1)
+    )
+    public boolean onItemUsedLock(
+        boolean original,
+        @Local(name = "player") LocalPlayer player,
+        @Local(name = "subLevel") SubLevel subLevel
+    ) {
+        return this.gravitation$onItemUsedUtil(original, player, subLevel);
+    }
+
+    @Unique
+    private boolean gravitation$onItemUsedUtil(boolean original, LocalPlayer player, SubLevel subLevel) {
         if (!player.getMainHandItem().is(ModItems.PHYSICS_STAFF) && !player.getOffhandItem().is(ModItems.PHYSICS_STAFF)) return original;
         Vector3d size = subLevel.boundingBox().size();
         double sizeValue = size.x() * size.y() * size.z();
