@@ -1,0 +1,11 @@
+{
+  "priority": 3000,
+  "title": {
+    "text": { "translate": "gravitation.simulated_section.gravitation" },
+    "background": "#aa39231c",
+    "color": "#ffffeb8c",
+    "secondary_color": "#ffcea05a"
+  },
+  "sprite": "simulated:banner",
+  "only_animate_on_hover": true
+}

@@ -1,0 +1,36 @@
+[versions]
+minecraft = "1.21.1"
+neoForge = "21.1.227"
+parchment = "2024.11.17"
+lombok = "8.7.1"
+modDevGradle = "2.0.141"
+jsr305 = "3.0.2"
+jei = "19.27.0.340"
+anvillib = "2.0.0+snapshot.310"
+sable = "1.1.1"
+simulated = "1.1.0"
+mixinsquared = "0.3.7-beta.1"
+
+[libraries]
+#anvillib-network = { group = "dev.anvilcraft.lib", name = "anvillib-network-neoforge-1.21.1", version.ref = "anvillib" }
+anvillib-util = { group = "dev.anvilcraft.lib", name = "anvillib-util-neoforge-1.21.1", version.ref = "anvillib" }
+anvillib-registrum = { group = "dev.anvilcraft.lib", name = "anvillib-registrum-neoforge-1.21.1", version.ref = "anvillib" }
+anvillib-config = { group = "dev.anvilcraft.lib", name = "anvillib-config-neoforge-1.21.1", version.ref = "anvillib" }
+jsr305 = { group = "com.google.code.findbugs", name = "jsr305", version.ref = "jsr305" }
+jeiApi = { group = "mezz.jei", name = "jei-1.21.1-neoforge-api", version.ref = "jei" }
+jei = { group = "mezz.jei", name = "jei-1.21.1-neoforge", version.ref = "jei" }
+sable = { group = "dev.ryanhcode.sable", name = "sable-neoforge-1.21.1", version.ref = "sable" }
+simulated = { group = "dev.simulated_team.simulated", name = "simulated-neoforge-1.21.1", version.ref = "simulated" }
+offroad = { group = "dev.ryanhcode.offroad", name = "offroad-neoforge-1.21.1", version.ref = "simulated" }
+aeronautics = { group = "dev.eriksonn.aeronautics", name = "aeronautics-neoforge-1.21.1", version.ref = "simulated" }
+mixinsquared = { group = "com.github.bawnorton.mixinsquared", name = "mixinsquared-common", version.ref = "mixinsquared" }
+mixinsquared-neoforge = { group = "com.github.bawnorton.mixinsquared", name = "mixinsquared-neoforge", version.ref = "mixinsquared" }
+
+[bundles]
+anvillib = ['anvillib-util', 'anvillib-registrum', 'anvillib-config']
+simulated = ['sable', 'simulated', 'offroad', 'aeronautics']
+mixinsquared = ['mixinsquared', 'mixinsquared-neoforge']
+
+[plugins]
+modDevGradle = { id = "net.neoforged.moddev", version.ref = "modDevGradle" }
+lombok = { id = "io.freefair.lombok", version.ref = "lombok" }

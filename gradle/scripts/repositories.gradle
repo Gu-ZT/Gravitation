@@ -1,0 +1,31 @@
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        // location of the maven that hosts JEI files since January 2023
+        name = "Jared's Maven"
+        url = "https://maven.blamejared.com/"
+    }
+    maven {
+        // location of a maven mirror for JEI files, as a fallback
+        name = "Mod Maven"
+        url = "https://modmaven.dev"
+    }
+    maven {
+        // location of a maven mirror for JEI files, as a fallback
+        name = "Modrinth Maven"
+        url = "https://api.modrinth.com/maven"
+    }
+    maven {
+        name = "Create Maven"
+        url = "https://maven.createmod.net"
+    }
+    maven {
+        name = "Ryanhcode Maven"
+        url = "https://maven.ryanhcode.dev/releases"
+    }
+    maven {
+        name = "Bawnorton Maven"
+        url = "https://maven.bawnorton.com/releases"
+    }
+}

@@ -1,0 +1,12 @@
+{
+  "block.gravitation.redstone_mass_energy_converter": "Redstone Mass Energy Converter",
+  "gravitation.configuration.redstone_mass_energy_converter_max_mass": "Redstone Mass Energy Converter Max Mass",
+  "gravitation.configuration.redstone_mass_energy_converter_max_mass.tooltip": "The minimum adjustable weight for the Redstone Mass Energy Converter",
+  "gravitation.configuration.redstone_mass_energy_converter_min_mass": "Redstone Mass Energy Converter Min Mass",
+  "gravitation.configuration.redstone_mass_energy_converter_min_mass.tooltip": "The minimum adjustable weight for the Redstone Mass Energy Converter",
+  "gravitation.configuration.section.gravitation.common.toml": "Gravitation Common Configuration",
+  "gravitation.configuration.section.gravitation.common.toml.title": "Gravitation Common Configuration",
+  "gravitation.configuration.title": "Gravitation Configuration",
+  "gravitation.simulated_section.gravitation": "Gravitation",
+  "scroll_option.gravitation.max_mass": "Max Mass"
+}
