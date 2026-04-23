@@ -1,0 +1,11 @@
+{
+	"format_version": "1.9.0",
+	"credit": "Made by XeKr with Blockbench",
+	"parent": "gravitation:block/redstone_mass_energy_converter",
+	"textures": {
+		"top": "gravitation:block/redstone_mass_energy_converter_top_on",
+		"side": "gravitation:block/redstone_mass_energy_converter_side_on",
+		"particle": "gravitation:block/redstone_mass_energy_converter_bottom",
+		"bottom": "gravitation:block/redstone_mass_energy_converter_bottom"
+	}
+}
