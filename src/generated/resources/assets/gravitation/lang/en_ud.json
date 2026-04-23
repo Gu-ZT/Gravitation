@@ -1,12 +1,15 @@
 {
   "block.gravitation.redstone_mass_energy_converter": "ɹǝʇɹǝʌuoƆ ʎᵷɹǝuƎ ssɐW ǝuoʇspǝᴚ",
+  "gravitation.configuration.physics_staff_allowed_max_control_size": "ǝzᴉS ꞁoɹʇuoƆ xɐW pǝʍoꞁꞁⱯ ɟɟɐʇS sɔᴉsʎɥԀ",
+  "gravitation.configuration.physics_staff_allowed_max_control_size.tooltip": "ꞁoɹʇuoɔ pǝʍoꞁꞁɐ ɟɟɐʇs sɔᴉsʎɥd ɹoɟ ǝzᴉs ɯnɯᴉxɐɯ ǝɥ⟘",
   "gravitation.configuration.redstone_mass_energy_converter_max_mass": "ssɐW xɐW ɹǝʇɹǝʌuoƆ ʎᵷɹǝuƎ ssɐW ǝuoʇspǝᴚ",
-  "gravitation.configuration.redstone_mass_energy_converter_max_mass.tooltip": "ɹǝʇɹǝʌuoƆ ʎᵷɹǝuƎ ssɐW ǝuoʇspǝᴚ ǝɥʇ ɹoɟ ʇɥᵷᴉǝʍ ǝꞁqɐʇsnɾpɐ ɯnɯᴉuᴉɯ ǝɥ⟘",
+  "gravitation.configuration.redstone_mass_energy_converter_max_mass.tooltip": "ɹǝʇɹǝʌuoƆ ʎᵷɹǝuƎ ssɐW ǝuoʇspǝᴚ ǝɥʇ ɹoɟ ʇɥᵷᴉǝʍ ǝꞁqɐʇsnɾpɐ ɯnɯᴉxɐɯ ǝɥ⟘",
   "gravitation.configuration.redstone_mass_energy_converter_min_mass": "ssɐW uᴉW ɹǝʇɹǝʌuoƆ ʎᵷɹǝuƎ ssɐW ǝuoʇspǝᴚ",
   "gravitation.configuration.redstone_mass_energy_converter_min_mass.tooltip": "ɹǝʇɹǝʌuoƆ ʎᵷɹǝuƎ ssɐW ǝuoʇspǝᴚ ǝɥʇ ɹoɟ ʇɥᵷᴉǝʍ ǝꞁqɐʇsnɾpɐ ɯnɯᴉuᴉɯ ǝɥ⟘",
   "gravitation.configuration.section.gravitation.common.toml": "uoᴉʇɐɹnᵷᴉɟuoƆ uoɯɯoƆ uoᴉʇɐʇᴉʌɐɹ⅁",
   "gravitation.configuration.section.gravitation.common.toml.title": "uoᴉʇɐɹnᵷᴉɟuoƆ uoɯɯoƆ uoᴉʇɐʇᴉʌɐɹ⅁",
   "gravitation.configuration.title": "uoᴉʇɐɹnᵷᴉɟuoƆ uoᴉʇɐʇᴉʌɐɹ⅁",
   "gravitation.simulated_section.gravitation": "uoᴉʇɐʇᴉʌɐɹ⅁",
+  "item.gravitation.physics_staff": "ɟɟɐʇS sɔᴉsʎɥԀ",
   "scroll_option.gravitation.max_mass": "ssɐW xɐW"
 }

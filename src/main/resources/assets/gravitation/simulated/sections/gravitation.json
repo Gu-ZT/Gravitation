@@ -6,6 +6,6 @@
     "color": "#ffffeb8c",
     "secondary_color": "#ffcea05a"
   },
-  "sprite": "simulated:banner",
+  "sprite": "gravitation:banner",
   "only_animate_on_hover": true
 }

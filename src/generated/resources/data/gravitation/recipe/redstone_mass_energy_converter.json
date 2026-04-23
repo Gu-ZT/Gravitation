@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "A": {
+      "item": "minecraft:chipped_anvil"
+    },
+    "B": {
+      "item": "minecraft:anvil"
+    },
+    "C": {
+      "item": "minecraft:damaged_anvil"
+    },
+    "D": {
+      "item": "aeronautics:end_stone_powder"
+    },
+    "E": {
+      "item": "minecraft:redstone_block"
+    },
+    "X": {
+      "item": "create:brass_casing"
+    }
+  },
+  "pattern": [
+    "DBD",
+    "AEC",
+    "DXD"
+  ],
+  "result": {
+    "count": 1,
+    "id": "gravitation:redstone_mass_energy_converter"
+  }
+}

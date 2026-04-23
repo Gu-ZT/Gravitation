@@ -4,14 +4,20 @@
   "package": "dev.dubhe.gravitation.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "PhysicsBlockPropertyHelperMixin"
+    "PhysicsBlockPropertyHelperMixin",
+    "PhysicsStaffClientHandlerMixin"
   ],
   "client": [
+    "GuiGraphicsMixinSquare",
+    "PhysicsStaffRenderHandlerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
   },
   "overwrites": {
     "requireAnnotations": true
+  },
+  "mixinextras": {
+    "minVersion": "0.5.3"
   }
 }

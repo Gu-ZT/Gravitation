@@ -1,0 +1,65 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_endstone_powder": {
+      "conditions": {
+        "items": [
+          {
+            "items": "aeronautics:end_stone_powder"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_gyro_mechanism": {
+      "conditions": {
+        "items": [
+          {
+            "items": "simulated:gyroscopic_mechanism"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_levitite_blend_bucket": {
+      "conditions": {
+        "items": [
+          {
+            "items": "aeronautics:levitite_blend_bucket"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "gravitation:physics_staff"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    },
+    "has_wrench": {
+      "conditions": {
+        "items": [
+          {
+            "items": "create:wrench"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_endstone_powder",
+      "has_gyro_mechanism",
+      "has_wrench",
+      "has_levitite_blend_bucket"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "gravitation:physics_staff"
+    ]
+  }
+}

@@ -1,12 +1,15 @@
 {
   "block.gravitation.redstone_mass_energy_converter": "Redstone Mass Energy Converter",
+  "gravitation.configuration.physics_staff_allowed_max_control_size": "Physics Staff Allowed Max Control Size",
+  "gravitation.configuration.physics_staff_allowed_max_control_size.tooltip": "The maximum size for physics staff allowed control",
   "gravitation.configuration.redstone_mass_energy_converter_max_mass": "Redstone Mass Energy Converter Max Mass",
-  "gravitation.configuration.redstone_mass_energy_converter_max_mass.tooltip": "The minimum adjustable weight for the Redstone Mass Energy Converter",
+  "gravitation.configuration.redstone_mass_energy_converter_max_mass.tooltip": "The maximum adjustable weight for the Redstone Mass Energy Converter",
   "gravitation.configuration.redstone_mass_energy_converter_min_mass": "Redstone Mass Energy Converter Min Mass",
   "gravitation.configuration.redstone_mass_energy_converter_min_mass.tooltip": "The minimum adjustable weight for the Redstone Mass Energy Converter",
   "gravitation.configuration.section.gravitation.common.toml": "Gravitation Common Configuration",
   "gravitation.configuration.section.gravitation.common.toml.title": "Gravitation Common Configuration",
   "gravitation.configuration.title": "Gravitation Configuration",
   "gravitation.simulated_section.gravitation": "Gravitation",
+  "item.gravitation.physics_staff": "Physics Staff",
   "scroll_option.gravitation.max_mass": "Max Mass"
 }

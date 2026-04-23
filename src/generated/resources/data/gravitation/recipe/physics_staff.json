@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": {
+      "item": "aeronautics:end_stone_powder"
+    },
+    "B": {
+      "item": "simulated:gyroscopic_mechanism"
+    },
+    "C": {
+      "item": "create:wrench"
+    },
+    "D": {
+      "item": "aeronautics:levitite_blend_bucket"
+    }
+  },
+  "pattern": [
+    " AD",
+    " BA",
+    "C  "
+  ],
+  "result": {
+    "count": 1,
+    "id": "gravitation:physics_staff"
+  }
+}

@@ -4,6 +4,7 @@ import dev.anvilcraft.lib.v2.config.ConfigManager;
 import dev.dubhe.gravitation.data.GravitationData;
 import dev.dubhe.gravitation.init.ModBlockEntities;
 import dev.dubhe.gravitation.init.ModBlocks;
+import dev.dubhe.gravitation.init.ModItems;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -21,6 +22,7 @@ public class Gravitation {
     public Gravitation(IEventBus modEventBus, ModContainer modContainer) {
         ModBlockEntities.register();
         ModBlocks.register();
+        ModItems.register();
         GravitationData.init();
     }
 

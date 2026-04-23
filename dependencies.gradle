@@ -3,14 +3,14 @@ dependencies {
     jarJar(libs.bundles.anvillib)
 
     implementation(libs.bundles.mixinsquared)
-    // jarJar(libs.mixinsquared)
+    jarJar(libs.mixinsquared)
 
     compileOnly libs.jsr305
     compileOnly libs.jeiApi
     runtimeOnly libs.jei
 
-    implementation (libs.bundles.simulated) {
-        exclude group: "foundry.veil"
+    compileOnly(libs.registrate)
+    implementation(libs.bundles.simulated) {
         exclude group: "com.tterrag.registrate"
         exclude group: "cc.tweaked"
     }
