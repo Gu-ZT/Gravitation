@@ -5,10 +5,12 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "PhysicsBlockPropertyHelperMixin",
-    "PhysicsStaffClientHandlerMixin"
+    "PhysicsStaffClientHandlerMixin",
+    "LevelPlotAccessor"
   ],
   "client": [
     "GuiGraphicsMixinSquare",
+    "PhysicsStaffItemRendererMixin",
     "PhysicsStaffRenderHandlerMixin"
   ],
   "injectors": {

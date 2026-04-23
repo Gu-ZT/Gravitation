@@ -9,6 +9,7 @@ displayName = "${mod_name}"
 displayURL = "https://sable.gugle.dubhe.dev"
 authors = "${mod_authors}"
 description = '''${mod_description}'''
+logoFile = "icon.png"
 
 [[mixins]]
 config = "${mod_id}.mixins.json"

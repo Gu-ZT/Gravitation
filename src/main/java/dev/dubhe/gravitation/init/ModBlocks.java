@@ -8,12 +8,32 @@ import dev.eriksonn.aeronautics.index.AeroItems;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.MapColor;
+import net.neoforged.neoforge.client.model.generators.ConfiguredModel;
+import net.neoforged.neoforge.client.model.generators.ModelFile;
+import net.neoforged.neoforge.client.model.generators.VariantBlockStateBuilder;
 
 import static dev.dubhe.gravitation.Gravitation.REGISTRUM;
 
 public class ModBlocks {
     public static final BlockEntry<RedstoneMassEnergyConverterBlock> REDSTONE_QUALITY_ENERGY_CONVERTER = REGISTRUM
         .block("redstone_mass_energy_converter", RedstoneMassEnergyConverterBlock::new)
+        .properties(p -> p.mapColor(MapColor.TERRACOTTA_BROWN))
+        .properties(BlockBehaviour.Properties::noOcclusion)
+        .blockstate((context, provider) -> {
+            ModelFile off = provider.models().getExistingFile(context.getId().withPrefix("block/"));
+            ModelFile on = provider.models().getExistingFile(context.getId().withPrefix("block/").withSuffix("_on"));
+            VariantBlockStateBuilder.PartialBlockstate builder = provider.getVariantBuilder(context.get())
+                .partialState()
+                .with(RedstoneMassEnergyConverterBlock.POWER, 0)
+                .addModels(new ConfiguredModel(off));
+            for (int i = 1; i < 16; i++) {
+                builder.partialState()
+                    .with(RedstoneMassEnergyConverterBlock.POWER, i)
+                    .addModels(new ConfiguredModel(on));
+            }
+        })
         .simpleItem()
         .recipe((context, provider) -> ShapedRecipeBuilder
             .shaped(RecipeCategory.REDSTONE, context.get())

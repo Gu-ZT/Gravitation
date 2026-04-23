@@ -1,0 +1,7 @@
+{
+  "parent": "simulated:item/creative_physics_staff/ring",
+  "textures": {
+    "0": "gravitation:item/physics_staff",
+    "particle": "gravitation:item/physics_staff"
+  }
+}
