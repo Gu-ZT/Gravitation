@@ -12,7 +12,7 @@ sable = "1.1.1"
 simulated = "1.1.0"
 mixinsquared = "0.3.7-beta.1"
 registrate = "MC1.21-1.3.0+67"
-
+cc_tweaked = "1.116.1"
 [libraries]
 #anvillib-network = { group = "dev.anvilcraft.lib", name = "anvillib-network-neoforge-1.21.1", version.ref = "anvillib" }
 anvillib-util = { group = "dev.anvilcraft.lib", name = "anvillib-util-neoforge-1.21.1", version.ref = "anvillib" }
@@ -29,11 +29,15 @@ aeronautics = { group = "dev.eriksonn.aeronautics", name = "aeronautics-neoforge
 mixinsquared = { group = "com.github.bawnorton.mixinsquared", name = "mixinsquared-common", version.ref = "mixinsquared" }
 mixinsquared-neoforge = { group = "com.github.bawnorton.mixinsquared", name = "mixinsquared-neoforge", version.ref = "mixinsquared" }
 registrate = { group = "com.tterrag.registrate", name = "Registrate", version.ref = "registrate" }
+ccTweaked-coreApi = { group = "cc.tweaked", name = "cc-tweaked-1.21.1-core-api", version.ref = "cc_tweaked" }
+ccTweaked-forgeApi = { group = "cc.tweaked", name = "cc-tweaked-1.21.1-forge-api", version.ref = "cc_tweaked" }
+ccTweaked = { group = "cc.tweaked", name = "cc-tweaked-1.21.1-forge", version.ref = "cc_tweaked" }
 
 [bundles]
 anvillib = ['anvillib-util', 'anvillib-registrum', 'anvillib-config']
 simulated = ['flywheel', 'sable', 'simulated', 'offroad', 'aeronautics']
 mixinsquared = ['mixinsquared', 'mixinsquared-neoforge']
+ccTweakedApi = ['ccTweaked-coreApi', 'ccTweaked-forgeApi']
 
 [plugins]
 modDevGradle = { id = "net.neoforged.moddev", version.ref = "modDevGradle" }

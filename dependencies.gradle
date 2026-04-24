@@ -14,4 +14,7 @@ dependencies {
         exclude group: "com.tterrag.registrate"
         exclude group: "cc.tweaked"
     }
+
+    compileOnly libs.bundles.ccTweakedApi
+    runtimeOnly libs.ccTweaked
 }
