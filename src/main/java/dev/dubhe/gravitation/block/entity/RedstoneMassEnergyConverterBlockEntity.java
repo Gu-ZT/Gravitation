@@ -53,6 +53,25 @@ public class RedstoneMassEnergyConverterBlockEntity extends SmartBlockEntity {
         return this.maxConverterValue.getValue();
     }
 
+    public final int getMinConfigMass() {
+        return Gravitation.CONFIG.getRedstoneMassEnergyConverterMinMass();
+    }
+
+    public final int getMaxConfigMass() {
+        return Gravitation.CONFIG.getRedstoneMassEnergyConverterMaxMass();
+    }
+
+    public final int getConfiguredMaxMass() {
+        return (int) this.getMaxConverterValue();
+    }
+
+    public final int setConfiguredMaxMass(int value) {
+        int clamped = Math.clamp(value, this.getMinConfigMass(), this.getMaxConfigMass());
+        if (this.maxConverterValue == null) return clamped;
+        this.maxConverterValue.setValue(clamped);
+        return this.maxConverterValue.getValue();
+    }
+
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);

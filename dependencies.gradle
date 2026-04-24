@@ -3,7 +3,12 @@ dependencies {
     jarJar(libs.bundles.anvillib)
 
     implementation(libs.bundles.mixinsquared)
-    jarJar(libs.mixinsquared)
+    jarJar(libs.mixinsquared) {
+        version {
+            strictly '[0.0.1,)'
+            prefer libs.versions.mixinsquared
+        }
+    }
 
     compileOnly libs.jsr305
     compileOnly libs.jeiApi

@@ -4,9 +4,11 @@ import dev.anvilcraft.lib.v2.config.ConfigManager;
 import dev.dubhe.gravitation.data.GravitationData;
 import dev.dubhe.gravitation.init.ModBlockEntities;
 import dev.dubhe.gravitation.init.ModBlocks;
+import dev.dubhe.gravitation.init.ModCapabilities;
 import dev.dubhe.gravitation.init.ModItems;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 
@@ -20,6 +22,9 @@ public class Gravitation {
     public static final GravitationConfig CONFIG = ConfigManager.register(Gravitation.MOD_ID, GravitationConfig::new);
 
     public Gravitation(IEventBus modEventBus, ModContainer modContainer) {
+        if (ModList.get().isLoaded("computercraft")) {
+            modEventBus.addListener(ModCapabilities::register);
+        }
         ModBlockEntities.register();
         ModBlocks.register();
         ModItems.register();
