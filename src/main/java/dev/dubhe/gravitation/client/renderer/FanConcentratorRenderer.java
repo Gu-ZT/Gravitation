@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRenderer;
-import dev.dubhe.gravitation.block.entity.WindTunnelBlockEntity;
+import dev.dubhe.gravitation.block.entity.FanConcentratorBlockEntity;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import net.createmod.catnip.animation.AnimationTickHolder;
 import net.createmod.catnip.render.CachedBuffers;
@@ -16,12 +16,12 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.AxisDirection;
 
-public class WindTunnelFanRenderer extends SafeBlockEntityRenderer<WindTunnelBlockEntity> {
-    public WindTunnelFanRenderer(BlockEntityRendererProvider.Context context) {
+public class FanConcentratorRenderer extends SafeBlockEntityRenderer<FanConcentratorBlockEntity> {
+    public FanConcentratorRenderer(BlockEntityRendererProvider.Context context) {
     }
 
     protected void renderSafe(
-        WindTunnelBlockEntity blockEntity,
+        FanConcentratorBlockEntity blockEntity,
         float partialTicks,
         PoseStack poseStack,
         MultiBufferSource bufferSource,

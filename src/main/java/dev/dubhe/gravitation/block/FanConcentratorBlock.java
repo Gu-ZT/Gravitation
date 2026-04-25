@@ -3,7 +3,7 @@ package dev.dubhe.gravitation.block;
 
 import com.mojang.serialization.MapCodec;
 import com.simibubi.create.content.kinetics.fan.IAirCurrentSource;
-import dev.dubhe.gravitation.block.entity.WindTunnelBlockEntity;
+import dev.dubhe.gravitation.block.entity.FanConcentratorBlockEntity;
 import dev.dubhe.gravitation.init.ModBlockEntities;
 import dev.dubhe.gravitation.windtunnel.WindTunnelNetwork;
 import net.minecraft.core.BlockPos;
@@ -92,7 +92,7 @@ public class FanConcentratorBlock extends BaseEntityBlock implements EntityBlock
             return level.isClientSide ? createTickerHelper(
                 blockEntityType,
                 ModBlockEntities.FAN_CONCENTRATOR.get(),
-                WindTunnelBlockEntity::clientTick
+                FanConcentratorBlockEntity::clientTick
             ) : null;
         }
     }

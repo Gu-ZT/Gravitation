@@ -1,6 +1,6 @@
 package dev.dubhe.gravitation.windtunnel;
 
-import dev.dubhe.gravitation.block.entity.WindTunnelBlockEntity;
+import dev.dubhe.gravitation.block.entity.FanConcentratorBlockEntity;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -24,7 +24,7 @@ public final class WindTunnelWindProvider {
     private WindTunnelWindProvider() {
     }
 
-    public static void updateTracking(WindTunnelBlockEntity blockEntity, boolean active) {
+    public static void updateTracking(FanConcentratorBlockEntity blockEntity, boolean active) {
         if (blockEntity.getLevel() != null && !blockEntity.getLevel().isClientSide) {
             ResourceKey<Level> dimension = blockEntity.getLevel().dimension();
             if (!active) {
@@ -52,7 +52,7 @@ public final class WindTunnelWindProvider {
         }
     }
 
-    public static void unregister(WindTunnelBlockEntity blockEntity) {
+    public static void unregister(FanConcentratorBlockEntity blockEntity) {
         updateTracking(blockEntity, false);
     }
 

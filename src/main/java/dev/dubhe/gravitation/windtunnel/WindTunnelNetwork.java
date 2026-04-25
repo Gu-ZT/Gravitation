@@ -1,7 +1,7 @@
 package dev.dubhe.gravitation.windtunnel;
 
 import dev.dubhe.gravitation.block.FanConcentratorBlock;
-import dev.dubhe.gravitation.block.entity.WindTunnelBlockEntity;
+import dev.dubhe.gravitation.block.entity.FanConcentratorBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -59,8 +59,8 @@ public final class WindTunnelNetwork {
         BlockState state = level.getBlockState(tunnelPos);
         if (state.getBlock() instanceof FanConcentratorBlock) {
             BlockEntity blockEntity = level.getBlockEntity(tunnelPos);
-            if (blockEntity instanceof WindTunnelBlockEntity windTunnelBlockEntity) {
-                windTunnelBlockEntity.onTunnelStateChanged();
+            if (blockEntity instanceof FanConcentratorBlockEntity fanConcentratorBlockEntity) {
+                fanConcentratorBlockEntity.onTunnelStateChanged();
             }
         }
     }

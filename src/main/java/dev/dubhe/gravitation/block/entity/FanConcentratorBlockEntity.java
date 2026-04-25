@@ -27,7 +27,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-public class WindTunnelBlockEntity extends SyncedBlockEntity implements IAirCurrentSource, IHaveGoggleInformation {
+public class FanConcentratorBlockEntity extends SyncedBlockEntity implements IAirCurrentSource, IHaveGoggleInformation {
     private static final float MIN_PARTICLE_SPAWN_CHANCE = 0.15F;
     private static final float MAX_PARTICLE_SPAWN_CHANCE = 0.85F;
     private final AirCurrent airCurrent;
@@ -44,7 +44,7 @@ public class WindTunnelBlockEntity extends SyncedBlockEntity implements IAirCurr
     private AABB cachedSearchBounds;
     private boolean trackedActive;
 
-    public WindTunnelBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState blockState) {
+    public FanConcentratorBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState blockState) {
         super(type, pos, blockState);
         this.cachedFacing = Direction.NORTH;
         this.cachedSourceSpeed = Float.NaN;
@@ -52,7 +52,7 @@ public class WindTunnelBlockEntity extends SyncedBlockEntity implements IAirCurr
         this.cachedSearchBounds = new AABB(pos);
     }
 
-    public static void clientTick(Level level, BlockPos pos, BlockState state, WindTunnelBlockEntity blockEntity) {
+    public static void clientTick(Level level, BlockPos pos, BlockState state, FanConcentratorBlockEntity blockEntity) {
         blockEntity.tickAirFlowParticles();
     }
 
@@ -163,7 +163,6 @@ public class WindTunnelBlockEntity extends SyncedBlockEntity implements IAirCurr
         tooltip.add(Component.translatable("block.gravitation.fan_concentrator.goggles.title").withStyle(ChatFormatting.GRAY));
 
         double length = 0.0F;
-        boolean sealed = false;
         if (this.level != null) {
             Direction flowDirection = this.cachedFlowDirection != null ? this.cachedFlowDirection : this.getFacing();
             WindTunnelFlowField.DuctProbe probe = WindTunnelFlowField.probeSealedDuct(
@@ -173,16 +172,10 @@ public class WindTunnelBlockEntity extends SyncedBlockEntity implements IAirCurr
                 dev.dubhe.gravitation.Gravitation.CONFIG.windTunnel.maxRange
             );
             length = probe.length();
-            sealed = probe.sealed();
         }
 
         tooltip.add(Component.translatable("block.gravitation.fan_concentrator.goggles.length", String.format("%.2f", length))
             .withStyle(ChatFormatting.AQUA));
-        tooltip.add(Component.translatable(
-            sealed
-            ? "block.gravitation.fan_concentrator.goggles.sealed"
-            : "block.gravitation.fan_concentrator.goggles.unsealed"
-        ).withStyle(sealed ? ChatFormatting.GREEN : ChatFormatting.RED));
         return true;
     }
 
