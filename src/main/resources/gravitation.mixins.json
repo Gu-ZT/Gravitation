@@ -4,12 +4,12 @@
   "package": "dev.dubhe.gravitation.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "LevelPlotAccessor",
     "PhysicsBlockPropertyHelperMixin",
-    "PhysicsStaffClientHandlerMixin",
-    "LevelPlotAccessor"
+    "PhysicsStaffClientHandlerMixin"
   ],
   "client": [
-    "GuiGraphicsMixinSquare",
+    "GuiGraphicsMixin",
     "PhysicsStaffItemRendererMixin",
     "PhysicsStaffRenderHandlerMixin"
   ],
