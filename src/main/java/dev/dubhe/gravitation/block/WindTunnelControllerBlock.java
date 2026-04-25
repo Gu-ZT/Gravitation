@@ -20,15 +20,12 @@ import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.Rotation;
-import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -40,10 +37,6 @@ public class WindTunnelControllerBlock extends BaseEntityBlock implements Entity
     public static final BooleanProperty POWERED = BooleanProperty.create("powered");
     public static final BooleanProperty ENABLED = BooleanProperty.create("enabled");
     private static final VoxelShape SHAPE = Shapes.block();
-
-    public WindTunnelControllerBlock() {
-        this(Properties.of().mapColor(MapColor.COLOR_ORANGE).strength(3.5F, 6.0F).sound(SoundType.COPPER).requiresCorrectToolForDrops());
-    }
 
     public WindTunnelControllerBlock(Properties properties) {
         super(properties);
@@ -98,7 +91,7 @@ public class WindTunnelControllerBlock extends BaseEntityBlock implements Entity
         } else {
             MenuProvider provider = new SimpleMenuProvider(
                 (containerId, inventory, user) -> new WindTunnelControllerMenu(containerId, pos),
-                Component.translatable("block.windtunnel.wind_tunnel_controller")
+                Component.translatable("block.gravitation.wind_tunnel_controller")
             );
             player.openMenu(provider, pos);
             return InteractionResult.CONSUME;

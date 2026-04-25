@@ -12,14 +12,14 @@ public class ModMenus {
     public static final MenuEntry<WindTunnelControllerMenu> WIND_TUNNEL_CONTROLLER = REGISTRUM
         .menu(
             "wind_tunnel_controller",
-            (type, a, b, c) -> new WindTunnelControllerMenu(type, a, b, c),
+            WindTunnelControllerMenu::new,
             () -> WindTunnelControllerScreen::new
         )
         .register();
     public static final MenuEntry<WindTunnelMountMenu> WIND_TUNNEL_MOUNT = REGISTRUM
         .menu(
             "wind_tunnel_mount",
-            (type, a, b, c) -> new WindTunnelMountMenu(type, a, b, c),
+            WindTunnelMountMenu::new,
             () -> WindTunnelMountScreen::new
         )
         .register();

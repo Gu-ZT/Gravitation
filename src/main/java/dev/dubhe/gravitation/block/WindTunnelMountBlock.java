@@ -12,13 +12,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -107,14 +104,14 @@ public class WindTunnelMountBlock extends BaseEntityBlock implements EntityBlock
 
                     if (mount.hasBinding()) {
                         mount.clearBinding();
-                        player.displayClientMessage(Component.translatable("block.windtunnel.wind_tunnel_mount.binding_cleared"), true);
+                        player.displayClientMessage(Component.translatable("block.gravitation.wind_tunnel_mount.binding_cleared"), true);
                         return InteractionResult.CONSUME;
                     }
                 }
 
                 MenuProvider provider = new SimpleMenuProvider(
                     (containerId, inventory, user) -> new WindTunnelMountMenu(containerId, pos),
-                    Component.translatable("block.windtunnel.wind_tunnel_mount")
+                    Component.translatable("block.gravitation.wind_tunnel_mount")
                 );
                 player.openMenu(provider, pos);
                 return InteractionResult.CONSUME;
@@ -135,14 +132,14 @@ public class WindTunnelMountBlock extends BaseEntityBlock implements EntityBlock
             return InteractionResult.CONSUME;
         }
         if (!selection.dimension().equals(level.dimension())) {
-            player.displayClientMessage(Component.translatable("block.windtunnel.wind_tunnel_mount.selection_wrong_dimension"), true);
+            player.displayClientMessage(Component.translatable("block.gravitation.wind_tunnel_mount.selection_wrong_dimension"), true);
             return InteractionResult.CONSUME;
         }
         BlockState selectedState = level.getBlockState(selection.pos());
         Block var8 = selectedState.getBlock();
         if (!(var8 instanceof WindTunnelMountInterfaceBlock)) {
             WindTunnelMountSelection.clear(player);
-            player.displayClientMessage(Component.translatable("block.windtunnel.wind_tunnel_mount.selection_invalid"), true);
+            player.displayClientMessage(Component.translatable("block.gravitation.wind_tunnel_mount.selection_invalid"), true);
             return InteractionResult.CONSUME;
         }
         SubLevel var9 = Sable.HELPER.getContaining(level, selection.pos());
@@ -154,10 +151,10 @@ public class WindTunnelMountBlock extends BaseEntityBlock implements EntityBlock
                 selectedState.getValue(WindTunnelMountInterfaceBlock.FACING)
             );
             WindTunnelMountSelection.clear(player);
-            player.displayClientMessage(Component.translatable("block.windtunnel.wind_tunnel_mount.bound"), true);
+            player.displayClientMessage(Component.translatable("block.gravitation.wind_tunnel_mount.bound"), true);
         } else {
             player.displayClientMessage(
-                Component.translatable("block.windtunnel.wind_tunnel_mount.selection_not_aircraft"),
+                Component.translatable("block.gravitation.wind_tunnel_mount.selection_not_aircraft"),
                 true
             );
         }

@@ -10,6 +10,8 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 
+import javax.annotation.Nullable;
+
 @Getter
 public class WindTunnelControllerMenu extends AbstractContainerMenu {
     private final BlockPos controllerPos;
@@ -20,13 +22,17 @@ public class WindTunnelControllerMenu extends AbstractContainerMenu {
     }
 
     public WindTunnelControllerMenu(
-        MenuType<WindTunnelControllerMenu> tMenuType,
+        @Nullable MenuType<WindTunnelControllerMenu> tMenuType,
         int containerId,
-        Inventory inventory,
-        RegistryFriendlyByteBuf extraData
+        @Nullable Inventory inventory,
+        @Nullable RegistryFriendlyByteBuf extraData
     ) {
         super(tMenuType, containerId);
-        this.controllerPos = extraData.readBlockPos();
+        if (extraData != null) {
+            this.controllerPos = extraData.readBlockPos();
+        } else {
+            this.controllerPos = BlockPos.ZERO;
+        }
     }
 
     public boolean stillValid(Player player) {

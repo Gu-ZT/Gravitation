@@ -70,7 +70,7 @@ public class WindTunnelControllerScreen extends AbstractContainerScreen<WindTunn
             left + 12,
             top + 58,
             SLIDER_WIDTH,
-            Component.translatable("block.windtunnel.wind_tunnel_controller.target_length"),
+            Component.translatable("block.gravitation.wind_tunnel_controller.target_length"),
             1,
             64,
             this.targetLength,
@@ -87,7 +87,7 @@ public class WindTunnelControllerScreen extends AbstractContainerScreen<WindTunn
             left + 12,
             top + 92,
             SLIDER_WIDTH,
-            Component.translatable("block.windtunnel.wind_tunnel_controller.target_airspeed"),
+            Component.translatable("block.gravitation.wind_tunnel_controller.target_airspeed"),
             0,
             64,
             this.targetAirspeed,
@@ -275,8 +275,8 @@ public class WindTunnelControllerScreen extends AbstractContainerScreen<WindTunn
     private void updateEnabledButton() {
         if (this.enabledButton != null) {
             this.enabledButton.setMessage(Component.translatable(this.enabled
-                                                                 ? "block.windtunnel.wind_tunnel_controller.enabled"
-                                                                 : "block.windtunnel.wind_tunnel_controller.disabled"));
+                                                                 ? "block.gravitation.wind_tunnel_controller.enabled"
+                                                                 : "block.gravitation.wind_tunnel_controller.disabled"));
         }
     }
 
