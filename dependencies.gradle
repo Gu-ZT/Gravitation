@@ -6,7 +6,7 @@ dependencies {
     jarJar(libs.mixinsquared) {
         version {
             strictly '[0.0.1,)'
-            prefer libs.versions.mixinsquared
+            prefer libs.versions.mixinsquared.get()
         }
     }
 
