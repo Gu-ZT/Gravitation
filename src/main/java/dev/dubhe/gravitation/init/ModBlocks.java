@@ -5,8 +5,7 @@ import com.simibubi.create.AllItems;
 import dev.anvilcraft.lib.v2.registrum.providers.RegistrumRecipeProvider;
 import dev.anvilcraft.lib.v2.registrum.util.entry.BlockEntry;
 import dev.dubhe.gravitation.block.RedstoneMassEnergyConverterBlock;
-import dev.dubhe.gravitation.block.WindTunnelBlock;
-import dev.dubhe.gravitation.block.WindTunnelControllerBlock;
+import dev.dubhe.gravitation.block.FanConcentratorBlock;
 import dev.dubhe.gravitation.block.WindTunnelMountBlock;
 import dev.dubhe.gravitation.block.WindTunnelMountInterfaceBlock;
 import dev.eriksonn.aeronautics.index.AeroItems;
@@ -62,11 +61,12 @@ public class ModBlocks {
         )
         .register();
 
-    public static final BlockEntry<WindTunnelBlock> WIND_TUNNEL = REGISTRUM
-        .block("wind_tunnel", WindTunnelBlock::new)
+    public static final BlockEntry<FanConcentratorBlock> FAN_CONCENTRATOR = REGISTRUM
+        .block("fan_concentrator", FanConcentratorBlock::new)
         .properties(properties -> properties.mapColor(MapColor.METAL)
             .strength(3.5F, 6.0F)
             .sound(SoundType.COPPER)
+            .noOcclusion()
             .requiresCorrectToolForDrops()
         )
         .simpleItem()
@@ -81,24 +81,6 @@ public class ModBlocks {
             .unlockedBy("has_iron_bars", RegistrumRecipeProvider.has(Items.IRON_BARS))
             .unlockedBy("has_shaft", RegistrumRecipeProvider.has(AllBlocks.SHAFT.get()))
             .unlockedBy("has_andesite_casing", RegistrumRecipeProvider.has(AllBlocks.ANDESITE_CASING.get()))
-            .save(provider)
-        )
-        .register();
-
-    public static final BlockEntry<WindTunnelControllerBlock> WIND_TUNNEL_CONTROLLER = REGISTRUM
-        .block("wind_tunnel_controller", WindTunnelControllerBlock::new)
-        .simpleItem()
-        .recipe((context, provider) -> ShapedRecipeBuilder
-            .shaped(RecipeCategory.MISC, context.get())
-            .pattern("BRB")
-            .pattern("RCR")
-            .pattern("BRB")
-            .define('B', AllItems.BRASS_SHEET.get())
-            .define('C', Items.COMPARATOR)
-            .define('R', Items.REDSTONE)
-            .unlockedBy("has_brass_sheet", RegistrumRecipeProvider.has(AllItems.BRASS_SHEET.get()))
-            .unlockedBy("has_comparator", RegistrumRecipeProvider.has(Items.COMPARATOR))
-            .unlockedBy("has_redstone", RegistrumRecipeProvider.has(Items.REDSTONE))
             .save(provider)
         )
         .register();

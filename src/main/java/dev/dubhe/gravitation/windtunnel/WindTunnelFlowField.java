@@ -84,6 +84,48 @@ public record WindTunnelFlowField(
     }
 
     @Nullable
+    public static WindTunnelFlowField createFromFan(
+        Level level,
+        BlockPos origin,
+        Direction direction,
+        float fanSpeed
+    ) {
+        double rpm = Math.abs(fanSpeed);
+        double desiredLength = rpm / 4.0F;
+        if (desiredLength <= 0.0F) {
+            return null;
+        }
+
+        double airspeed = Math.log(rpm) / Math.log(2.0F);
+        if (airspeed <= 0.0F) {
+            return null;
+        }
+
+        int scanRange = Mth.clamp(Mth.ceil(desiredLength), 1, Gravitation.CONFIG.windTunnel.maxRange);
+        WindTunnelFlowField field = create(level, origin, direction, scanRange, airspeed, Gravitation.CONFIG.windTunnel.maxAirspeed);
+        if (field == null) {
+            return null;
+        }
+
+        double limitedLength = Math.min(field.length(), desiredLength);
+        if (limitedLength <= 0.0F) {
+            return null;
+        }
+
+        return new WindTunnelFlowField(
+            field.direction(),
+            limitedLength,
+            createBounds(origin, direction, limitedLength, Gravitation.CONFIG.windTunnel.crossSectionRadius),
+            field.impulse(),
+            field.normalizedImpulse(),
+            field.impulseMagnitude(),
+            field.nozzleCenter(),
+            Math.max(1.0F, limitedLength),
+            field.forceFalloff()
+        );
+    }
+
+    @Nullable
     private static WindTunnelFlowField create(
         Level level,
         BlockPos origin,

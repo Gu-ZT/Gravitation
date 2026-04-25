@@ -4,7 +4,6 @@ import dev.anvilcraft.lib.v2.registrum.util.entry.BlockEntityEntry;
 import dev.dubhe.gravitation.block.entity.RedstoneMassEnergyConverterBlockEntity;
 import dev.dubhe.gravitation.client.renderer.RedstoneMassEnergyConverterBlockEntityRenderer;
 import dev.dubhe.gravitation.block.entity.WindTunnelBlockEntity;
-import dev.dubhe.gravitation.block.entity.WindTunnelControllerBlockEntity;
 import dev.dubhe.gravitation.block.entity.WindTunnelMountBlockEntity;
 
 import static dev.dubhe.gravitation.Gravitation.REGISTRUM;
@@ -16,14 +15,9 @@ public class ModBlockEntities {
         .renderer(() -> RedstoneMassEnergyConverterBlockEntityRenderer::new)
         .register();
 
-    public static final BlockEntityEntry<WindTunnelBlockEntity> WIND_TUNNEL = REGISTRUM
-        .blockEntity("wind_tunnel", WindTunnelBlockEntity::new)
-        .validBlock(ModBlocks.WIND_TUNNEL)
-        .register();
-
-    public static final BlockEntityEntry<WindTunnelControllerBlockEntity> WIND_TUNNEL_CONTROLLER = REGISTRUM
-        .blockEntity("wind_tunnel_controller", WindTunnelControllerBlockEntity::new)
-        .validBlock(ModBlocks.WIND_TUNNEL_CONTROLLER)
+    public static final BlockEntityEntry<WindTunnelBlockEntity> FAN_CONCENTRATOR = REGISTRUM
+        .blockEntity("fan_concentrator", WindTunnelBlockEntity::new)
+        .validBlock(ModBlocks.FAN_CONCENTRATOR)
         .register();
 
     public static final BlockEntityEntry<WindTunnelMountBlockEntity> WIND_TUNNEL_MOUNT = REGISTRUM

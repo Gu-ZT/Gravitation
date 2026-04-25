@@ -2,8 +2,6 @@ package dev.dubhe.gravitation.client;
 
 import dev.dubhe.gravitation.Gravitation;
 import dev.dubhe.gravitation.client.init.ModPartialModels;
-import dev.dubhe.gravitation.client.renderer.WindTunnelFanRenderer;
-import dev.dubhe.gravitation.init.ModBlockEntities;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -19,6 +17,5 @@ public class GravitationClient {
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerBlockEntityRenderer(ModBlockEntities.WIND_TUNNEL.get(), WindTunnelFanRenderer::new);
     }
 }

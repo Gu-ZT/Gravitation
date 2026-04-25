@@ -11,11 +11,11 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "gravitation:wind_tunnel"
+          "name": "gravitation:fan_concentrator"
         }
       ],
       "rolls": 1.0
     }
   ],
-  "random_sequence": "gravitation:blocks/wind_tunnel"
+  "random_sequence": "gravitation:blocks/fan_concentrator"
 }

@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gravitation:block/wind_tunnel_controller"
+    "all": "gravitation:block/fan_concentrator"
   }
 }

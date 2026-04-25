@@ -12,14 +12,6 @@ public class LangHandler {
         provider.add(Util.makeDescriptionId("scroll_option", Gravitation.location("max_mass")), "Max Mass");
         ConfigData.readConfigClass(provider, GravitationConfig.class);
 
-        provider.add("block.gravitation.wind_tunnel_controller.settings", "Wind Tunnel Settings");
-        provider.add("block.gravitation.wind_tunnel_controller.target_length", "Flow Length");
-        provider.add("block.gravitation.wind_tunnel_controller.target_airspeed", "Airspeed");
-        provider.add("block.gravitation.wind_tunnel_controller.enabled", "Enabled");
-        provider.add("block.gravitation.wind_tunnel_controller.disabled", "Disabled");
-        provider.add("block.gravitation.wind_tunnel_controller.target_length_value", "Length, %s");
-        provider.add("block.gravitation.wind_tunnel_controller.target_airspeed_value", "Airspeed, %s");
-
         provider.add("block.gravitation.wind_tunnel_mount_interface.selected", "Mount interface selected");
         provider.add("block.gravitation.wind_tunnel_mount_interface.not_on_aircraft", "Mount interface must be placed on an aircraft");
 

@@ -33,7 +33,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "gravitation:wind_tunnel"
+        "recipe": "gravitation:fan_concentrator"
       },
       "trigger": "minecraft:recipe_unlocked"
     }
@@ -48,7 +48,7 @@
   ],
   "rewards": {
     "recipes": [
-      "gravitation:wind_tunnel"
+      "gravitation:fan_concentrator"
     ]
   }
 }
