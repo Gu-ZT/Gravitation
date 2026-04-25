@@ -1,6 +1,7 @@
 package dev.dubhe.gravitation.block.entity;
 
 import com.simibubi.create.infrastructure.config.AllConfigs;
+import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.content.kinetics.fan.AirCurrent;
 import com.simibubi.create.content.kinetics.fan.AirFlowParticleData;
 import com.simibubi.create.content.kinetics.fan.IAirCurrentSource;
@@ -13,6 +14,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -20,9 +23,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.List;
+
 import javax.annotation.Nullable;
 
-public class WindTunnelBlockEntity extends SyncedBlockEntity implements IAirCurrentSource {
+public class WindTunnelBlockEntity extends SyncedBlockEntity implements IAirCurrentSource, IHaveGoggleInformation {
     private static final float MIN_PARTICLE_SPAWN_CHANCE = 0.15F;
     private static final float MAX_PARTICLE_SPAWN_CHANCE = 0.85F;
     private final AirCurrent airCurrent;
@@ -150,6 +155,35 @@ public class WindTunnelBlockEntity extends SyncedBlockEntity implements IAirCurr
 
     public boolean isSourceRemoved() {
         return this.isRemoved();
+    }
+
+    @Override
+    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        this.refreshAirCurrentIfNeeded();
+        tooltip.add(Component.translatable("block.gravitation.fan_concentrator.goggles.title").withStyle(ChatFormatting.GRAY));
+
+        double length = 0.0F;
+        boolean sealed = false;
+        if (this.level != null) {
+            Direction flowDirection = this.cachedFlowDirection != null ? this.cachedFlowDirection : this.getFacing();
+            WindTunnelFlowField.DuctProbe probe = WindTunnelFlowField.probeSealedDuct(
+                this.level,
+                this.worldPosition,
+                flowDirection,
+                dev.dubhe.gravitation.Gravitation.CONFIG.windTunnel.maxRange
+            );
+            length = probe.length();
+            sealed = probe.sealed();
+        }
+
+        tooltip.add(Component.translatable("block.gravitation.fan_concentrator.goggles.length", String.format("%.2f", length))
+            .withStyle(ChatFormatting.AQUA));
+        tooltip.add(Component.translatable(
+            sealed
+            ? "block.gravitation.fan_concentrator.goggles.sealed"
+            : "block.gravitation.fan_concentrator.goggles.unsealed"
+        ).withStyle(sealed ? ChatFormatting.GREEN : ChatFormatting.RED));
+        return true;
     }
 
     private void tickAirFlowParticles() {

@@ -1,5 +1,9 @@
 {
   "block.gravitation.fan_concentrator": "Fan Concentrator",
+  "block.gravitation.fan_concentrator.goggles.length": "Duct Length: %s",
+  "block.gravitation.fan_concentrator.goggles.sealed": "Sealed",
+  "block.gravitation.fan_concentrator.goggles.title": "Duct Diagnostics",
+  "block.gravitation.fan_concentrator.goggles.unsealed": "Unsealed or Blocked",
   "block.gravitation.redstone_mass_energy_converter": "Redstone Mass Energy Converter",
   "block.gravitation.wind_tunnel_mount": "Wind Tunnel Mount",
   "block.gravitation.wind_tunnel_mount.angle_of_attack": "Angle of Attack",

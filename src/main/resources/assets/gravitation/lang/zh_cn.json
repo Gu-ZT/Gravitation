@@ -1,5 +1,9 @@
 {
   "block.gravitation.fan_concentrator": "鼓风机收束器",
+  "block.gravitation.fan_concentrator.goggles.length": "管道长度: %s",
+  "block.gravitation.fan_concentrator.goggles.sealed": "密封完整",
+  "block.gravitation.fan_concentrator.goggles.title": "管道诊断",
+  "block.gravitation.fan_concentrator.goggles.unsealed": "未密封或被阻塞",
   "block.gravitation.redstone_mass_energy_converter": "红石质能转换装置",
   "block.gravitation.wind_tunnel_mount": "风洞支架",
   "block.gravitation.wind_tunnel_mount.angle_of_attack": "迎角",

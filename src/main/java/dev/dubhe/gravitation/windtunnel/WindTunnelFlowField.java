@@ -2,19 +2,21 @@ package dev.dubhe.gravitation.windtunnel;
 
 import com.simibubi.create.AllTags.AllBlockTags;
 import com.simibubi.create.content.decoration.copycat.CopycatBlock;
+import dev.dubhe.gravitation.block.FanConcentratorBlock;
 import dev.dubhe.gravitation.Gravitation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Direction.AxisDirection;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import javax.annotation.Nullable;
+import java.util.ArrayDeque;
+import java.util.HashSet;
+import java.util.Set;
 
 public record WindTunnelFlowField(
     Direction direction,
@@ -27,28 +29,12 @@ public record WindTunnelFlowField(
     double attenuationLength,
     double forceFalloff
 ) {
-    private static final double[][] DEPTH_TEST_COORDINATES = new double[][]{
-        {
-            (double) 0.25F,
-            (double) 0.25F
-        },
-        {
-            (double) 0.25F,
-            (double) 0.75F
-        },
-        {
-            (double) 0.5F,
-            (double) 0.5F
-        },
-        {
-            (double) 0.75F,
-            (double) 0.25F
-        },
-        {
-            (double) 0.75F,
-            (double) 0.75F
-        }
-    };
+    public record DuctProbe(double length, boolean sealed) {
+    }
+
+    private static final Direction[] X_AXIS_SIDES = new Direction[]{Direction.UP, Direction.DOWN, Direction.NORTH, Direction.SOUTH};
+    private static final Direction[] Y_AXIS_SIDES = new Direction[]{Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST};
+    private static final Direction[] Z_AXIS_SIDES = new Direction[]{Direction.UP, Direction.DOWN, Direction.WEST, Direction.EAST};
 
     public WindTunnelFlowField {
         attenuationLength = Math.max(1.0F, attenuationLength);
@@ -91,38 +77,11 @@ public record WindTunnelFlowField(
         float fanSpeed
     ) {
         double rpm = Math.abs(fanSpeed);
-        double desiredLength = rpm / 4.0F;
-        if (desiredLength <= 0.0F) {
-            return null;
-        }
-
         double airspeed = Math.log(rpm) / Math.log(2.0F);
         if (airspeed <= 0.0F) {
             return null;
         }
-
-        int scanRange = Mth.clamp(Mth.ceil(desiredLength), 1, Gravitation.CONFIG.windTunnel.maxRange);
-        WindTunnelFlowField field = create(level, origin, direction, scanRange, airspeed, Gravitation.CONFIG.windTunnel.maxAirspeed);
-        if (field == null) {
-            return null;
-        }
-
-        double limitedLength = Math.min(field.length(), desiredLength);
-        if (limitedLength <= 0.0F) {
-            return null;
-        }
-
-        return new WindTunnelFlowField(
-            field.direction(),
-            limitedLength,
-            createBounds(origin, direction, limitedLength, Gravitation.CONFIG.windTunnel.crossSectionRadius),
-            field.impulse(),
-            field.normalizedImpulse(),
-            field.impulseMagnitude(),
-            field.nozzleCenter(),
-            Math.max(1.0F, limitedLength),
-            field.forceFalloff()
-        );
+        return create(level, origin, direction, Gravitation.CONFIG.windTunnel.maxRange, airspeed, Gravitation.CONFIG.windTunnel.maxAirspeed);
     }
 
     @Nullable
@@ -134,8 +93,9 @@ public record WindTunnelFlowField(
         double baseAirspeed,
         double maxAirspeed
     ) {
-        double openLength = findOpenLength(level, origin, direction, Math.max(1, configuredLength));
-        if (openLength <= (double) 0.0F) {
+        DuctProbe probe = probeSealedDuct(level, origin, direction, Math.max(1, configuredLength));
+        double ductLength = probe.length();
+        if (ductLength <= (double) 0.0F) {
             return null;
         } else {
             double clampedAirspeed = Mth.clamp(baseAirspeed, 0.0F, maxAirspeed);
@@ -143,16 +103,20 @@ public record WindTunnelFlowField(
             Vec3 normalizedImpulse = clampedAirspeed <= 1.0E-8 ? Vec3.ZERO : Vec3.atLowerCornerOf(direction.getNormal());
             return new WindTunnelFlowField(
                 direction,
-                openLength,
-                createBounds(origin, direction, openLength, Gravitation.CONFIG.windTunnel.crossSectionRadius),
+                ductLength,
+                createBounds(origin, direction, ductLength, Gravitation.CONFIG.windTunnel.crossSectionRadius),
                 impulse,
                 normalizedImpulse,
                 clampedAirspeed,
                 Vec3.atCenterOf(origin).add(impulse.scale(0.75F)),
-                Math.max(1.0F, openLength),
+                Math.max(1.0F, ductLength),
                 Gravitation.CONFIG.windTunnel.forceFalloff
             );
         }
+    }
+
+    public static DuctProbe probeSealedDuct(Level level, BlockPos origin, Direction direction, int maxRange) {
+        return findSealedDuctLength(level, origin, direction, Math.max(1, maxRange));
     }
 
     public double attenuationFor(Vec3 samplePoint, BlockPos origin) {
@@ -170,67 +134,130 @@ public record WindTunnelFlowField(
         }
     }
 
-    private static double findOpenLength(Level level, BlockPos origin, Direction direction, int maxRange) {
-        for (int step = 0; step < maxRange; ++step) {
-            BlockPos currentPos = origin.relative(direction, step + 1);
-            if (!level.isLoaded(currentPos)) {
-                return step;
+    private static DuctProbe findSealedDuctLength(Level level, BlockPos origin, Direction direction, int maxRange) {
+        Set<BlockPos> sectionOffsets = collectSectionOffsets(level, origin, direction);
+        if (sectionOffsets.isEmpty()) {
+            return new DuctProbe(0, false);
+        }
+
+        Direction[] sideDirections = getSideDirections(direction.getAxis());
+        // Start sealing checks at the first block in front of the concentrator face.
+        for (int distance = 1; distance <= maxRange; ++distance) {
+            if (!isLayerPassableAndEdgeSealed(level, origin, direction, distance, sectionOffsets, sideDirections)) {
+                return new DuctProbe(distance - 1, false);
             }
+        }
 
-            BlockState currentState = level.getBlockState(currentPos);
-            BlockState copycatState = CopycatBlock.getMaterial(level, currentPos);
-            if (!shouldAlwaysPass(copycatState.isAir() ? currentState : copycatState)) {
-                VoxelShape shape = currentState.getCollisionShape(level, currentPos);
-                if (!shape.isEmpty()) {
-                    if (shape == Shapes.block()) {
-                        return step;
-                    }
+        return new DuctProbe(maxRange, true);
+    }
 
-                    double shapeDepth = findMaxDepth(shape, direction);
-                    if (shapeDepth != Double.POSITIVE_INFINITY) {
-                        return Math.min((double) step + shapeDepth + (double) 0.03125F, maxRange);
-                    }
+    private static Set<BlockPos> collectSectionOffsets(Level level, BlockPos origin, Direction direction) {
+        if (!isSectionNozzle(level, origin, direction)) {
+            return Set.of();
+        }
+
+        Direction[] sideDirections = getSideDirections(direction.getAxis());
+        Set<BlockPos> visited = new HashSet<>();
+        Set<BlockPos> sectionOffsets = new HashSet<>();
+        ArrayDeque<BlockPos> frontier = new ArrayDeque<>();
+        frontier.add(origin);
+        visited.add(origin);
+
+        while (!frontier.isEmpty()) {
+            BlockPos current = frontier.removeFirst();
+            sectionOffsets.add(current.subtract(origin));
+
+            for (Direction side : sideDirections) {
+                BlockPos next = current.relative(side);
+                if (visited.add(next) && isSectionNozzle(level, next, direction)) {
+                    frontier.addLast(next);
                 }
             }
         }
 
-        return maxRange;
+        return sectionOffsets;
+    }
+
+    private static boolean isLayerPassableAndEdgeSealed(
+        Level level,
+        BlockPos origin,
+        Direction direction,
+        int distance,
+        Set<BlockPos> sectionOffsets,
+        Direction[] sideDirections
+    ) {
+        for (BlockPos offset : sectionOffsets) {
+            BlockPos probePos = origin.offset(offset).relative(direction, distance);
+            if (!level.isLoaded(probePos) || !isDuctPassable(level, probePos)) {
+                return false;
+            }
+        }
+
+        // For arbitrary cross-sections, only enforce sealing on perimeter edges.
+        for (BlockPos offset : sectionOffsets) {
+            BlockPos probePos = origin.offset(offset).relative(direction, distance);
+            for (Direction side : sideDirections) {
+                if (sectionOffsets.contains(offset.relative(side))) {
+                    continue;
+                }
+                BlockPos wallPos = probePos.relative(side);
+                if (!level.isLoaded(wallPos) || !isFullSealBlock(level, wallPos)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static boolean isSectionNozzle(Level level, BlockPos pos, Direction direction) {
+        if (!level.isLoaded(pos)) {
+            return false;
+        }
+        BlockState state = level.getBlockState(pos);
+        if (!(state.getBlock() instanceof FanConcentratorBlock)) {
+            return false;
+        }
+        return state.getValue(FanConcentratorBlock.FACING) == direction;
+    }
+
+    private static boolean isDuctPassable(Level level, BlockPos pos) {
+        BlockState rawState = level.getBlockState(pos);
+        if (rawState.getBlock() instanceof FanConcentratorBlock) {
+            return true;
+        }
+        BlockState state = getEffectiveState(level, pos);
+        if (state.isAir() || shouldAlwaysPass(state)) {
+            return true;
+        }
+        VoxelShape shape = state.getCollisionShape(level, pos);
+        return shape.isEmpty();
+    }
+
+    private static Direction[] getSideDirections(Direction.Axis axis) {
+        return switch (axis) {
+            case X -> X_AXIS_SIDES;
+            case Y -> Y_AXIS_SIDES;
+            case Z -> Z_AXIS_SIDES;
+        };
+    }
+
+    private static boolean isFullSealBlock(Level level, BlockPos pos) {
+        BlockState state = getEffectiveState(level, pos);
+        // Strict wall check: only full collision blocks are valid pipe walls.
+        return !state.isAir() && state.isCollisionShapeFullBlock(level, pos);
+    }
+
+    private static BlockState getEffectiveState(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        BlockState copycatState = CopycatBlock.getMaterial(level, pos);
+        return copycatState.isAir() ? state : copycatState;
     }
 
     private static boolean shouldAlwaysPass(BlockState state) {
         return AllBlockTags.FAN_TRANSPARENT.matches(state);
     }
 
-    private static double findMaxDepth(VoxelShape shape, Direction direction) {
-        Direction.Axis axis = direction.getAxis();
-        AxisDirection axisDirection = direction.getAxisDirection();
-        double maxDepth = 0.0F;
-
-        for (double[] coordinates : DEPTH_TEST_COORDINATES) {
-            double depth;
-            if (axisDirection == AxisDirection.POSITIVE) {
-                double min = shape.min(axis, coordinates[0], coordinates[1]);
-                if (min == Double.POSITIVE_INFINITY) {
-                    return Double.POSITIVE_INFINITY;
-                }
-
-                depth = min;
-            } else {
-                double max = shape.max(axis, coordinates[0], coordinates[1]);
-                if (max == Double.NEGATIVE_INFINITY) {
-                    return Double.POSITIVE_INFINITY;
-                }
-
-                depth = (double) 1.0F - max;
-            }
-
-            if (depth > maxDepth) {
-                maxDepth = depth;
-            }
-        }
-
-        return maxDepth;
-    }
 
     private static AABB createBounds(BlockPos origin, Direction direction, double length, double radius) {
         AABB baseBox = new AABB(origin.relative(direction));
