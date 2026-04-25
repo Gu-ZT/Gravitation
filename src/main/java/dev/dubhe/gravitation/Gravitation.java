@@ -6,6 +6,7 @@ import dev.dubhe.gravitation.init.ModBlockEntities;
 import dev.dubhe.gravitation.init.ModBlocks;
 import dev.dubhe.gravitation.init.ModCapabilities;
 import dev.dubhe.gravitation.init.ModItems;
+import dev.dubhe.gravitation.init.ModMenus;
 import dev.dubhe.gravitation.windtunnel.WindTunnelMountService;
 import dev.dubhe.gravitation.windtunnel.WindTunnelWindProvider;
 import dev.ryanhcode.sable.api.SubLevelHelper;
@@ -34,6 +35,7 @@ public class Gravitation {
         ModBlockEntities.register();
         ModBlocks.register();
         ModItems.register();
+        ModMenus.register();
         GravitationData.init();
 
         if (!windProviderRegistered) {
