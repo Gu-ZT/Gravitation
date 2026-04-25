@@ -5,7 +5,6 @@ import dev.dubhe.gravitation.menu.WindTunnelMountMenu;
 import dev.dubhe.gravitation.network.payload.UpdateWindTunnelMountPayload;
 import dev.dubhe.gravitation.windtunnel.WindTunnelMountMeasurement;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
@@ -16,8 +15,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.Locale;
 import java.util.function.DoubleConsumer;
@@ -30,34 +29,36 @@ public class WindTunnelMountScreen extends AbstractContainerScreen<WindTunnelMou
     private static final int SLIDER_WIDTH = 144;
     private static final int FIELD_WIDTH = 54;
     private static final int CLIENT_EDIT_GRACE_TICKS = 8;
-    private static final int LABEL_COLOR = 4210752;
-    private static final int PANEL_COLOR = -593950;
-    private static final int BORDER_COLOR = -7904710;
-    private static final int ROW_FILL = 866616666;
-    private static final int SECTION_LINE = -2570320;
+    private static final int LABEL_COLOR = 0x404040;
+    private static final int PANEL_COLOR = 0xFFF6EFE2;
+    private static final int BORDER_COLOR = 0xFF87623A;
+    private static final int ROW_FILL = 0x33A7855A;
+    private static final int SECTION_LINE = 0xFFD8C7B0;
     private static final int BUTTON_ROW_Y = 26;
     private static final int FLOW_ROW_Y = 58;
     private static final int MEASUREMENT_TOP = 86;
     private static final int FIRST_SLIDER_Y = 128;
     private static final int SLIDER_SPACING = 26;
+
     private boolean suppressUpdates;
     private boolean locked;
-    private Direction flowDirection;
+    private Direction flowDirection = Direction.NORTH;
     private double angleOfAttack;
     private double sideslipAngle;
     private double offsetX;
     private double offsetY;
     private double offsetZ;
-    private WindTunnelMountMeasurement measurement;
+    private WindTunnelMountMeasurement measurement = WindTunnelMountMeasurement.EMPTY;
     private boolean waitingForServerState;
     private int pendingSyncTicks;
     private boolean lastSentLocked;
-    private Direction lastSentFlowDirection;
+    private Direction lastSentFlowDirection = Direction.NORTH;
     private double lastSentAngleOfAttack;
     private double lastSentSideslipAngle;
     private double lastSentOffsetX;
     private double lastSentOffsetY;
     private double lastSentOffsetZ;
+
     private @Nullable Button lockButton;
     private @Nullable CycleButton<Direction> flowDirectionButton;
     private @Nullable DecimalSlider angleSlider;
@@ -73,335 +74,296 @@ public class WindTunnelMountScreen extends AbstractContainerScreen<WindTunnelMou
 
     public WindTunnelMountScreen(WindTunnelMountMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        this.flowDirection = Direction.NORTH;
-        this.measurement = WindTunnelMountMeasurement.EMPTY;
-        this.lastSentFlowDirection = Direction.NORTH;
-        this.imageWidth = 248;
-        this.imageHeight = 264;
+        this.imageWidth = WIDTH;
+        this.imageHeight = HEIGHT;
         this.inventoryLabelY = 10000;
     }
 
+    @Override
     protected void init() {
         super.init();
         this.titleLabelX = 12;
         this.titleLabelY = 10;
-        this.loadState();
-        int left = this.leftPos;
-        int top = this.topPos;
-        this.lockButton = this.addRenderableWidget(Button.builder(
-            Component.empty(), (button) -> {
-                this.locked = !this.locked;
-                this.updateLockButton();
-                this.sendSettings(false);
-            }
-        ).bounds(left + 12, top + 26, 72, 20).build());
-        this.addRenderableWidget(Button.builder(
-                Component.translatable("block.windtunnel.wind_tunnel_mount.clear_binding"),
-                (button) -> this.sendSettings(true)
-            )
-            .bounds(left + 92, top + 26, 92, 20)
-            .build());
-        this.flowDirectionButton = this.addRenderableWidget(CycleButton.<Direction>builder((direction) -> Component.translatable(direction.getName()))
-            .withValues(Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST, Direction.UP, Direction.DOWN)
-            .withInitialValue(this.flowDirection)
-            .create(
-                left + 12,
-                top + 58,
-                224,
-                20,
-                Component.translatable("block.windtunnel.wind_tunnel_mount.flow_direction"),
-                (button, value) -> {
-                    this.flowDirection = value;
-                    if (!this.suppressUpdates) {
-                        this.sendSettings(false);
-                    }
+        // Read the latest server-backed state before constructing widgets.
+        loadState();
 
+        int left = leftPos;
+        int top = topPos;
+
+        lockButton = addRenderableWidget(Button.builder(
+            Component.empty(),
+            button -> {
+                locked = !locked;
+                updateLockButton();
+                sendSettings(false);
+            }
+        ).bounds(left + 12, top + BUTTON_ROW_Y, 72, 20).build());
+
+        addRenderableWidget(Button.builder(
+                Component.translatable("block.gravitation.wind_tunnel_mount.clear_binding"),
+                button -> sendSettings(true)
+            )
+            .bounds(left + 92, top + BUTTON_ROW_Y, 92, 20)
+            .build());
+
+        flowDirectionButton = addRenderableWidget(CycleButton.<Direction>builder(direction -> Component.translatable(direction.getName()))
+            .withValues(Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST, Direction.UP, Direction.DOWN)
+            .withInitialValue(flowDirection)
+            .create(
+                left + 12, top + FLOW_ROW_Y, 224, 20,
+                Component.translatable("block.gravitation.wind_tunnel_mount.flow_direction"),
+                (button, value) -> {
+                    flowDirection = value;
+                    if (!suppressUpdates) {
+                        sendSettings(false);
+                    }
                 }
             ));
-        this.angleSlider = this.addSlider(
-            left,
-            top,
-            128,
-            Component.translatable("block.windtunnel.wind_tunnel_mount.angle_of_attack"),
-            -90.0F,
-            90.0F,
-            () -> this.angleOfAttack,
-            (value) -> this.angleOfAttack = value,
-            () -> this.syncField(this.angleField, this.angleOfAttack)
+
+        angleSlider = addSlider(
+            left, top, FIRST_SLIDER_Y, Component.translatable("block.gravitation.wind_tunnel_mount.angle_of_attack"),
+            WindTunnelMountBlockEntity.MIN_ANGLE, WindTunnelMountBlockEntity.MAX_ANGLE,
+            () -> angleOfAttack, value -> angleOfAttack = value, () -> syncField(angleField, angleOfAttack)
         );
-        this.sideslipSlider = this.addSlider(
-            left,
-            top,
-            154,
-            Component.translatable("block.windtunnel.wind_tunnel_mount.sideslip_angle"),
-            -90.0F,
-            90.0F,
-            () -> this.sideslipAngle,
-            (value) -> this.sideslipAngle = value,
-            () -> this.syncField(this.sideslipField, this.sideslipAngle)
+        sideslipSlider = addSlider(
+            left, top, FIRST_SLIDER_Y + SLIDER_SPACING, Component.translatable("block.gravitation.wind_tunnel_mount.sideslip_angle"),
+            WindTunnelMountBlockEntity.MIN_ANGLE, WindTunnelMountBlockEntity.MAX_ANGLE,
+            () -> sideslipAngle, value -> sideslipAngle = value, () -> syncField(sideslipField, sideslipAngle)
         );
-        this.offsetXSlider = this.addSlider(
-            left,
-            top,
-            180,
-            Component.translatable("block.windtunnel.wind_tunnel_mount.offset_x"),
-            -64.0F,
-            64.0F,
-            () -> this.offsetX,
-            (value) -> this.offsetX = value,
-            () -> this.syncField(this.offsetXField, this.offsetX)
+        offsetXSlider = addSlider(
+            left, top, FIRST_SLIDER_Y + SLIDER_SPACING * 2, Component.translatable("block.gravitation.wind_tunnel_mount.offset_x"),
+            WindTunnelMountBlockEntity.MIN_OFFSET, WindTunnelMountBlockEntity.MAX_OFFSET,
+            () -> offsetX, value -> offsetX = value, () -> syncField(offsetXField, offsetX)
         );
-        this.offsetYSlider = this.addSlider(
-            left,
-            top,
-            206,
-            Component.translatable("block.windtunnel.wind_tunnel_mount.offset_y"),
-            -64.0F,
-            64.0F,
-            () -> this.offsetY,
-            (value) -> this.offsetY = value,
-            () -> this.syncField(this.offsetYField, this.offsetY)
+        offsetYSlider = addSlider(
+            left, top, FIRST_SLIDER_Y + SLIDER_SPACING * 3, Component.translatable("block.gravitation.wind_tunnel_mount.offset_y"),
+            WindTunnelMountBlockEntity.MIN_OFFSET, WindTunnelMountBlockEntity.MAX_OFFSET,
+            () -> offsetY, value -> offsetY = value, () -> syncField(offsetYField, offsetY)
         );
-        this.offsetZSlider = this.addSlider(
-            left,
-            top,
-            232,
-            Component.translatable("block.windtunnel.wind_tunnel_mount.offset_z"),
-            -64.0F,
-            64.0F,
-            () -> this.offsetZ,
-            (value) -> this.offsetZ = value,
-            () -> this.syncField(this.offsetZField, this.offsetZ)
+        offsetZSlider = addSlider(
+            left, top, FIRST_SLIDER_Y + SLIDER_SPACING * 4, Component.translatable("block.gravitation.wind_tunnel_mount.offset_z"),
+            WindTunnelMountBlockEntity.MIN_OFFSET, WindTunnelMountBlockEntity.MAX_OFFSET,
+            () -> offsetZ, value -> offsetZ = value, () -> syncField(offsetZField, offsetZ)
         );
-        this.angleField = this.addField(
-            left + 182, top + 128, () -> this.angleOfAttack, (value) -> {
-                this.angleOfAttack = value;
-                this.angleSlider.setExternalValue(value);
-                this.sendSettings(false);
-            }, -90.0F, 90.0F
+
+        angleField = addField(
+            left + 182, top + FIRST_SLIDER_Y, () -> angleOfAttack, value -> {
+                angleOfAttack = value;
+                angleSlider.setExternalValue(value);
+                sendSettings(false);
+            }, WindTunnelMountBlockEntity.MIN_ANGLE, WindTunnelMountBlockEntity.MAX_ANGLE
         );
-        this.sideslipField = this.addField(
-            left + 182, top + 128 + 26, () -> this.sideslipAngle, (value) -> {
-                this.sideslipAngle = value;
-                this.sideslipSlider.setExternalValue(value);
-                this.sendSettings(false);
-            }, -90.0F, 90.0F
+        sideslipField = addField(
+            left + 182, top + FIRST_SLIDER_Y + SLIDER_SPACING, () -> sideslipAngle, value -> {
+                sideslipAngle = value;
+                sideslipSlider.setExternalValue(value);
+                sendSettings(false);
+            }, WindTunnelMountBlockEntity.MIN_ANGLE, WindTunnelMountBlockEntity.MAX_ANGLE
         );
-        this.offsetXField = this.addField(
-            left + 182, top + 128 + 52, () -> this.offsetX, (value) -> {
-                this.offsetX = value;
-                this.offsetXSlider.setExternalValue(value);
-                this.sendSettings(false);
-            }, -64.0F, 64.0F
+        offsetXField = addField(
+            left + 182, top + FIRST_SLIDER_Y + SLIDER_SPACING * 2, () -> offsetX, value -> {
+                offsetX = value;
+                offsetXSlider.setExternalValue(value);
+                sendSettings(false);
+            }, WindTunnelMountBlockEntity.MIN_OFFSET, WindTunnelMountBlockEntity.MAX_OFFSET
         );
-        this.offsetYField = this.addField(
-            left + 182, top + 128 + 78, () -> this.offsetY, (value) -> {
-                this.offsetY = value;
-                this.offsetYSlider.setExternalValue(value);
-                this.sendSettings(false);
-            }, -64.0F, 64.0F
+        offsetYField = addField(
+            left + 182, top + FIRST_SLIDER_Y + SLIDER_SPACING * 3, () -> offsetY, value -> {
+                offsetY = value;
+                offsetYSlider.setExternalValue(value);
+                sendSettings(false);
+            }, WindTunnelMountBlockEntity.MIN_OFFSET, WindTunnelMountBlockEntity.MAX_OFFSET
         );
-        this.offsetZField = this.addField(
-            left + 182, top + 128 + 104, () -> this.offsetZ, (value) -> {
-                this.offsetZ = value;
-                this.offsetZSlider.setExternalValue(value);
-                this.sendSettings(false);
-            }, -64.0F, 64.0F
+        offsetZField = addField(
+            left + 182, top + FIRST_SLIDER_Y + SLIDER_SPACING * 4, () -> offsetZ, value -> {
+                offsetZ = value;
+                offsetZSlider.setExternalValue(value);
+                sendSettings(false);
+            }, WindTunnelMountBlockEntity.MIN_OFFSET, WindTunnelMountBlockEntity.MAX_OFFSET
         );
-        this.updateLockButton();
-        this.syncField(this.angleField, this.angleOfAttack);
-        this.syncField(this.sideslipField, this.sideslipAngle);
-        this.syncField(this.offsetXField, this.offsetX);
-        this.syncField(this.offsetYField, this.offsetY);
-        this.syncField(this.offsetZField, this.offsetZ);
+
+        updateLockButton();
+        syncField(angleField, angleOfAttack);
+        syncField(sideslipField, sideslipAngle);
+        syncField(offsetXField, offsetX);
+        syncField(offsetYField, offsetY);
+        syncField(offsetZField, offsetZ);
     }
 
+    @Override
     public void containerTick() {
         super.containerTick();
-        if (this.pendingSyncTicks > 0) {
-            --this.pendingSyncTicks;
+        if (pendingSyncTicks > 0) {
+            pendingSyncTicks--;
         }
-
-        this.loadState();
+        loadState();
     }
 
+    @Override
     public void onClose() {
-        this.commitFocusedFields();
+        commitFocusedFields();
         super.onClose();
     }
 
+    @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-        guiGraphics.fill(this.leftPos, this.topPos, this.leftPos + this.imageWidth, this.topPos + this.imageHeight, -7904710);
-        guiGraphics.fill(
-            this.leftPos + 1,
-            this.topPos + 1,
-            this.leftPos + this.imageWidth - 1,
-            this.topPos + this.imageHeight - 1,
-            -593950
-        );
-        guiGraphics.fill(this.leftPos + 8, this.topPos + 48, this.leftPos + this.imageWidth - 8, this.topPos + 49, -2570320);
-        guiGraphics.fill(this.leftPos + 8, this.topPos + 86 - 4, this.leftPos + this.imageWidth - 8, this.topPos + 86 + 26, 866616666);
-        guiGraphics.fill(this.leftPos + 8, this.topPos + 86 + 34, this.leftPos + this.imageWidth - 8, this.topPos + 86 + 35, -2570320);
-
-        for (int i = 0; i < 5; ++i) {
-            int rowTop = this.topPos + 128 + i * 26 - 4;
-            guiGraphics.fill(this.leftPos + 8, rowTop, this.leftPos + this.imageWidth - 8, rowTop + 24, 866616666);
+        guiGraphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, BORDER_COLOR);
+        guiGraphics.fill(leftPos + 1, topPos + 1, leftPos + imageWidth - 1, topPos + imageHeight - 1, PANEL_COLOR);
+        guiGraphics.fill(leftPos + 8, topPos + 48, leftPos + imageWidth - 8, topPos + 49, SECTION_LINE);
+        guiGraphics.fill(leftPos + 8, topPos + MEASUREMENT_TOP - 4, leftPos + imageWidth - 8, topPos + MEASUREMENT_TOP + 26, ROW_FILL);
+        guiGraphics.fill(leftPos + 8, topPos + MEASUREMENT_TOP + 34, leftPos + imageWidth - 8, topPos + MEASUREMENT_TOP + 35, SECTION_LINE);
+        for (int i = 0; i < 5; i++) {
+            int rowTop = topPos + FIRST_SLIDER_Y + i * SLIDER_SPACING - 4;
+            guiGraphics.fill(leftPos + 8, rowTop, leftPos + imageWidth - 8, rowTop + 24, ROW_FILL);
         }
-
     }
 
+    @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+        renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
-        this.renderTooltip(guiGraphics, mouseX, mouseY);
+        renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
+    @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 4210752, false);
+        guiGraphics.drawString(font, title, titleLabelX, titleLabelY, LABEL_COLOR, false);
         guiGraphics.drawString(
-            this.font,
-            Component.translatable("block.windtunnel.wind_tunnel_mount.flow_direction"),
+            font,
+            Component.translatable("block.gravitation.wind_tunnel_mount.flow_direction"),
             12,
             50,
-            4210752,
+            LABEL_COLOR,
             false
         );
-        guiGraphics.drawString(this.font, Component.translatable("block.windtunnel.wind_tunnel_mount.measurement"), 12, 86, 4210752, false);
         guiGraphics.drawString(
-            this.font,
+            font,
+            Component.translatable("block.gravitation.wind_tunnel_mount.measurement"),
+            12,
+            MEASUREMENT_TOP,
+            LABEL_COLOR,
+            false
+        );
+        guiGraphics.drawString(
+            font,
             Component.literal(String.format(
                 Locale.ROOT,
                 "L %.2f  D %.2f  Y %.2f",
-                this.measurement.lift(),
-                this.measurement.drag(),
-                this.measurement.sideForce()
+                measurement.lift(),
+                measurement.drag(),
+                measurement.sideForce()
             )),
             12,
-            98,
-            4210752,
+            MEASUREMENT_TOP + 12,
+            LABEL_COLOR,
             false
         );
         guiGraphics.drawString(
-            this.font, Component.literal(String.format(
+            font,
+            Component.literal(String.format(
                 Locale.ROOT,
                 "P %.2f  R %.2f  N %.2f",
-                this.measurement.pitchMoment(),
-                this.measurement.rollMoment(),
-                this.measurement.yawMoment()
-            )), 12, 110, 4210752, false
+                measurement.pitchMoment(),
+                measurement.rollMoment(),
+                measurement.yawMoment()
+            )),
+            12,
+            MEASUREMENT_TOP + 24,
+            LABEL_COLOR,
+            false
         );
     }
 
     private DecimalSlider addSlider(
-        int left,
-        int top,
-        int y,
-        Component label,
-        double min,
-        double max,
-        Supplier<Double> getter,
-        DoubleConsumer setter,
-        Runnable syncField
+        int left, int top, int y, Component label, double min, double max, Supplier<Double> getter,
+        DoubleConsumer setter, Runnable syncField
     ) {
         DecimalSlider slider = new DecimalSlider(
-            left + 12, top + y, 144, label, min, max, getter.get(), (value) -> {
+            left + 12, top + y, SLIDER_WIDTH, label, min, max, getter.get(), value -> {
             setter.accept(value);
             syncField.run();
-        }, () -> this.sendSettings(false)
+        }, () -> sendSettings(false)
         );
-        this.addRenderableWidget(slider);
+        addRenderableWidget(slider);
         return slider;
     }
 
     private DecimalEditBox addField(int x, int y, Supplier<Double> getter, DoubleConsumer onApply, double min, double max) {
-        DecimalEditBox field = new DecimalEditBox(this.font, x, y, 54, 20, getter.get(), min, max, onApply);
-        this.addRenderableWidget(field);
+        DecimalEditBox field = new DecimalEditBox(font, x, y, FIELD_WIDTH, 20, getter.get(), min, max, onApply);
+        addRenderableWidget(field);
         return field;
     }
 
     private void loadState() {
         Minecraft minecraft = this.minecraft;
-        if (minecraft != null && minecraft.level != null) {
-            BlockEntity var3 = minecraft.level.getBlockEntity(this.menu.getMountPos());
-            if (var3 instanceof WindTunnelMountBlockEntity mount) {
-                if (
-                    (
-                        this.angleSlider == null
-                        || !this.angleSlider.isSliding()
-                    )
-                    && (
-                        this.sideslipSlider == null
-                        || !this.sideslipSlider.isSliding()
-                    )
-                    && (
-                        this.offsetXSlider == null
-                        || !this.offsetXSlider.isSliding()
-                    )
-                    && (
-                        this.offsetYSlider == null
-                        || !this.offsetYSlider.isSliding()
-                    )
-                    && (
-                        this.offsetZSlider == null
-                        || !this.offsetZSlider.isSliding()
-                    )
-                ) {
-                    boolean blockLocked = mount.isLocked();
-                    Direction blockFlowDirection = mount.getFlowDirection();
-                    double blockAngleOfAttack = mount.getAngleOfAttack();
-                    double blockSideslipAngle = mount.getSideslipAngle();
-                    double blockOffsetX = mount.getOffsetX();
-                    double blockOffsetY = mount.getOffsetY();
-                    double blockOffsetZ = mount.getOffsetZ();
-                    this.measurement = mount.getMeasurement();
-                    if (this.waitingForServerState) {
-                        @SuppressWarnings("SuspiciousNameCombination")
-                        boolean serverCaughtUp = blockLocked == this.lastSentLocked
-                                                 && blockFlowDirection == this.lastSentFlowDirection
-                                                 && nearlyEquals(blockAngleOfAttack, this.lastSentAngleOfAttack)
-                                                 && nearlyEquals(blockSideslipAngle, this.lastSentSideslipAngle)
-                                                 && nearlyEquals(blockOffsetX, this.lastSentOffsetX)
-                                                 && nearlyEquals(blockOffsetY, this.lastSentOffsetY)
-                                                 && nearlyEquals(blockOffsetZ, this.lastSentOffsetZ);
-                        if (serverCaughtUp) {
-                            this.waitingForServerState = false;
-                            this.pendingSyncTicks = 0;
-                        } else {
-                            if (this.pendingSyncTicks > 0) {
-                                return;
-                            }
+        if (minecraft == null || minecraft.level == null) {
+            return;
+        }
 
-                            this.waitingForServerState = false;
-                        }
-                    }
+        if (!(minecraft.level.getBlockEntity(menu.getMountPos()) instanceof WindTunnelMountBlockEntity mount)) {
+            return;
+        }
 
-                    this.suppressUpdates = true;
-                    this.locked = blockLocked;
-                    this.flowDirection = blockFlowDirection;
-                    this.angleOfAttack = blockAngleOfAttack;
-                    this.sideslipAngle = blockSideslipAngle;
-                    this.offsetX = blockOffsetX;
-                    this.offsetY = blockOffsetY;
-                    this.offsetZ = blockOffsetZ;
-                    if (this.lockButton != null) {
-                        this.updateLockButton();
-                    }
+        if ((angleSlider != null && angleSlider.isSliding())
+            || (sideslipSlider != null && sideslipSlider.isSliding())
+            || (offsetXSlider != null && offsetXSlider.isSliding())
+            || (offsetYSlider != null && offsetYSlider.isSliding())
+            || (offsetZSlider != null && offsetZSlider.isSliding())) {
+            // Measurements should still update live even while the user is dragging controls.
+            measurement = mount.getMeasurement();
+            return;
+        }
 
-                    if (this.flowDirectionButton != null && this.flowDirectionButton.getValue() != this.flowDirection) {
-                        this.flowDirectionButton.setValue(this.flowDirection);
-                    }
+        boolean blockLocked = mount.isLocked();
+        Direction blockFlowDirection = mount.getFlowDirection();
+        double blockAngleOfAttack = mount.getAngleOfAttack();
+        double blockSideslipAngle = mount.getSideslipAngle();
+        double blockOffsetX = mount.getOffsetX();
+        double blockOffsetY = mount.getOffsetY();
+        double blockOffsetZ = mount.getOffsetZ();
+        measurement = mount.getMeasurement();
 
-                    this.syncSliderAndField(this.angleSlider, this.angleField, this.angleOfAttack);
-                    this.syncSliderAndField(this.sideslipSlider, this.sideslipField, this.sideslipAngle);
-                    this.syncSliderAndField(this.offsetXSlider, this.offsetXField, this.offsetX);
-                    this.syncSliderAndField(this.offsetYSlider, this.offsetYField, this.offsetY);
-                    this.syncSliderAndField(this.offsetZSlider, this.offsetZField, this.offsetZ);
-                    this.suppressUpdates = false;
-                } else {
-                    this.measurement = mount.getMeasurement();
-                }
+        if (waitingForServerState) {
+            // Preserve the local edit buffer briefly so the screen does not snap back while the
+            // packet is still in flight or the next BE sync has not arrived yet.
+            boolean serverCaughtUp = blockLocked == lastSentLocked
+                                     && blockFlowDirection == lastSentFlowDirection
+                                     && nearlyEquals(blockAngleOfAttack, lastSentAngleOfAttack)
+                                     && nearlyEquals(blockSideslipAngle, lastSentSideslipAngle)
+                                     && nearlyEquals(blockOffsetX, lastSentOffsetX)
+                                     && nearlyEquals(blockOffsetY, lastSentOffsetY)
+                                     && nearlyEquals(blockOffsetZ, lastSentOffsetZ);
+            if (serverCaughtUp) {
+                waitingForServerState = false;
+                pendingSyncTicks = 0;
+            } else if (pendingSyncTicks > 0) {
+                return;
+            } else {
+                waitingForServerState = false;
             }
         }
+
+        suppressUpdates = true;
+        locked = blockLocked;
+        flowDirection = blockFlowDirection;
+        angleOfAttack = blockAngleOfAttack;
+        sideslipAngle = blockSideslipAngle;
+        offsetX = blockOffsetX;
+        offsetY = blockOffsetY;
+        offsetZ = blockOffsetZ;
+
+        if (lockButton != null) {
+            updateLockButton();
+        }
+        if (flowDirectionButton != null && flowDirectionButton.getValue() != flowDirection) {
+            flowDirectionButton.setValue(flowDirection);
+        }
+        syncSliderAndField(angleSlider, angleField, angleOfAttack);
+        syncSliderAndField(sideslipSlider, sideslipField, sideslipAngle);
+        syncSliderAndField(offsetXSlider, offsetXField, offsetX);
+        syncSliderAndField(offsetYSlider, offsetYField, offsetY);
+        syncSliderAndField(offsetZSlider, offsetZField, offsetZ);
+        suppressUpdates = false;
     }
 
     private void syncSliderAndField(@Nullable DecimalSlider slider, @Nullable DecimalEditBox field, double value) {
@@ -412,7 +374,6 @@ public class WindTunnelMountScreen extends AbstractContainerScreen<WindTunnelMou
         if (field != null && !field.isFocused()) {
             this.syncField(field, value);
         }
-
     }
 
     private void syncField(@Nullable EditBox field, double value) {
@@ -423,42 +384,43 @@ public class WindTunnelMountScreen extends AbstractContainerScreen<WindTunnelMou
     }
 
     private void updateLockButton() {
-        if (this.lockButton != null) {
-            this.lockButton.setMessage(Component.translatable(this.locked
-                                                              ? "block.windtunnel.wind_tunnel_mount.locked"
-                                                              : "block.windtunnel.wind_tunnel_mount.unlocked"));
+        if (lockButton != null) {
+            lockButton.setMessage(Component.translatable(locked
+                                                         ? "block.gravitation.wind_tunnel_mount.locked"
+                                                         : "block.gravitation.wind_tunnel_mount.unlocked"));
         }
-
     }
 
     private void sendSettings(boolean clearBinding) {
-        if (!this.suppressUpdates) {
-            if (!clearBinding) {
-                this.waitingForServerState = true;
-                this.pendingSyncTicks = 8;
-                this.lastSentLocked = this.locked;
-                this.lastSentFlowDirection = this.flowDirection;
-                this.lastSentAngleOfAttack = this.angleOfAttack;
-                this.lastSentSideslipAngle = this.sideslipAngle;
-                this.lastSentOffsetX = this.offsetX;
-                this.lastSentOffsetY = this.offsetY;
-                this.lastSentOffsetZ = this.offsetZ;
-            }
-
-            PacketDistributor.sendToServer(
-                new UpdateWindTunnelMountPayload(
-                    this.menu.getMountPos(),
-                    this.locked,
-                    this.flowDirection,
-                    this.angleOfAttack,
-                    this.sideslipAngle,
-                    this.offsetX,
-                    this.offsetY,
-                    this.offsetZ,
-                    clearBinding
-                )
-            );
+        if (suppressUpdates) {
+            return;
         }
+
+        if (!clearBinding) {
+            // Remember what we sent so we can distinguish "server has not answered yet" from
+            // "server rejected or changed this state".
+            waitingForServerState = true;
+            pendingSyncTicks = CLIENT_EDIT_GRACE_TICKS;
+            lastSentLocked = locked;
+            lastSentFlowDirection = flowDirection;
+            lastSentAngleOfAttack = angleOfAttack;
+            lastSentSideslipAngle = sideslipAngle;
+            lastSentOffsetX = offsetX;
+            lastSentOffsetY = offsetY;
+            lastSentOffsetZ = offsetZ;
+        }
+
+        PacketDistributor.sendToServer(new UpdateWindTunnelMountPayload(
+            menu.getMountPos(),
+            locked,
+            flowDirection,
+            angleOfAttack,
+            sideslipAngle,
+            offsetX,
+            offsetY,
+            offsetZ,
+            clearBinding
+        ));
     }
 
     private static String formatValue(double value) {
@@ -466,39 +428,25 @@ public class WindTunnelMountScreen extends AbstractContainerScreen<WindTunnelMou
     }
 
     private void commitFocusedFields() {
-        if (this.angleField != null && this.angleField.isFocused()) {
-            this.angleField.commitValue();
+        if (angleField != null && angleField.isFocused()) {
+            angleField.commitValue();
         }
-
-        if (this.sideslipField != null && this.sideslipField.isFocused()) {
-            this.sideslipField.commitValue();
+        if (sideslipField != null && sideslipField.isFocused()) {
+            sideslipField.commitValue();
         }
-
-        if (this.offsetXField != null && this.offsetXField.isFocused()) {
-            this.offsetXField.commitValue();
+        if (offsetXField != null && offsetXField.isFocused()) {
+            offsetXField.commitValue();
         }
-
-        if (this.offsetYField != null && this.offsetYField.isFocused()) {
-            this.offsetYField.commitValue();
+        if (offsetYField != null && offsetYField.isFocused()) {
+            offsetYField.commitValue();
         }
-
-        if (this.offsetZField != null && this.offsetZField.isFocused()) {
-            this.offsetZField.commitValue();
+        if (offsetZField != null && offsetZField.isFocused()) {
+            offsetZField.commitValue();
         }
-
     }
 
     private static boolean nearlyEquals(double left, double right) {
-        return Math.abs(left - right) <= 1.0E-4;
-    }
-
-    private static double normalize(double value, double min, double max) {
-        return (value - min) / (max - min);
-    }
-
-    private static double denormalize(double value, double min, double max) {
-        double scaled = min + value * (max - min);
-        return (double) Math.round(scaled * (double) 100.0F) / (double) 100.0F;
+        return Math.abs(left - right) <= 1.0E-4D;
     }
 
     private class DecimalSlider extends AbstractSliderButton {
@@ -513,17 +461,10 @@ public class WindTunnelMountScreen extends AbstractContainerScreen<WindTunnelMou
         private boolean commitQueued;
 
         private DecimalSlider(
-            int x,
-            int y,
-            int width,
-            Component label,
-            double minValue,
-            double maxValue,
-            double initialValue,
-            DoubleConsumer onPreviewChange,
-            Runnable onCommit
+            int x, int y, int width, Component label, double minValue, double maxValue, double initialValue,
+            DoubleConsumer onPreviewChange, Runnable onCommit
         ) {
-            super(x, y, width, 20, Component.empty(), WindTunnelMountScreen.normalize(initialValue, minValue, maxValue));
+            super(x, y, width, 20, Component.empty(), normalize(initialValue, minValue, maxValue));
             this.label = label;
             this.minValue = minValue;
             this.maxValue = maxValue;
@@ -531,67 +472,73 @@ public class WindTunnelMountScreen extends AbstractContainerScreen<WindTunnelMou
             this.onCommit = onCommit;
             this.currentValue = initialValue;
             this.interactionStartValue = initialValue;
-            this.updateMessage();
+            updateMessage();
         }
 
+        @Override
         protected void updateMessage() {
-            this.setMessage(Component.literal(WindTunnelMountScreen.formatValue(this.currentValue)));
+            setMessage(Component.literal(formatValue(currentValue)));
         }
 
+        @Override
         protected void applyValue() {
-            double newValue = WindTunnelMountScreen.denormalize(this.value, this.minValue, this.maxValue);
-            if (!(Math.abs(newValue - this.currentValue) <= 1.0E-4)) {
-                this.currentValue = newValue;
-                this.updateMessage();
-                this.onPreviewChange.accept(newValue);
-                if (this.sliding) {
-                    this.commitQueued = true;
-                } else {
-                    this.onCommit.run();
-                }
+            double newValue = denormalize(this.value, minValue, maxValue);
+            if (Math.abs(newValue - currentValue) <= 1.0E-4D) {
+                return;
+            }
 
+            currentValue = newValue;
+            updateMessage();
+            onPreviewChange.accept(newValue);
+            if (sliding) {
+                // Preview continuously but emit one network commit when the drag gesture ends.
+                commitQueued = true;
+            } else {
+                onCommit.run();
             }
         }
 
+        @Override
         public void onClick(double mouseX, double mouseY) {
-            this.sliding = true;
-            this.commitQueued = false;
-            this.interactionStartValue = this.currentValue;
+            sliding = true;
+            commitQueued = false;
+            interactionStartValue = currentValue;
             super.onClick(mouseX, mouseY);
         }
 
+        @Override
         protected void onDrag(double mouseX, double mouseY, double dragX, double dragY) {
-            if (!this.sliding) {
-                this.sliding = true;
-                this.interactionStartValue = this.currentValue;
+            if (!sliding) {
+                sliding = true;
+                interactionStartValue = currentValue;
             }
-
             super.onDrag(mouseX, mouseY, dragX, dragY);
         }
 
+        @Override
         public void onRelease(double mouseX, double mouseY) {
             super.onRelease(mouseX, mouseY);
-            if (this.sliding && (this.commitQueued || Math.abs(this.currentValue - this.interactionStartValue) > 1.0E-4)) {
-                this.onCommit.run();
+            if (sliding && (commitQueued || Math.abs(currentValue - interactionStartValue) > 1.0E-4D)) {
+                onCommit.run();
             }
-
-            this.sliding = false;
-            this.commitQueued = false;
+            sliding = false;
+            commitQueued = false;
         }
 
+        @Override
         public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
             super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
-            guiGraphics.drawString(WindTunnelMountScreen.this.font, this.label, this.getX(), this.getY() - 10, 4210752, false);
+            guiGraphics.drawString(font, label, getX(), getY() - 10, LABEL_COLOR, false);
         }
 
         private void setExternalValue(double value) {
-            this.currentValue = value;
-            this.value = WindTunnelMountScreen.normalize(value, this.minValue, this.maxValue);
-            this.updateMessage();
+            currentValue = value;
+            this.value = normalize(value, minValue, maxValue);
+            updateMessage();
         }
 
         private boolean isSliding() {
-            return this.sliding;
+            return sliding;
         }
     }
 
@@ -601,54 +548,57 @@ public class WindTunnelMountScreen extends AbstractContainerScreen<WindTunnelMou
         private final DoubleConsumer onApply;
 
         private DecimalEditBox(
-            Font font,
-            int x,
-            int y,
-            int width,
-            int height,
-            double initialValue,
-            double minValue,
-            double maxValue,
-            DoubleConsumer onApply
+            net.minecraft.client.gui.Font font, int x, int y, int width, int height, double initialValue,
+            double minValue, double maxValue, DoubleConsumer onApply
         ) {
             super(font, x, y, width, height, Component.empty());
             this.minValue = minValue;
             this.maxValue = maxValue;
             this.onApply = onApply;
-            this.setMaxLength(8);
-            this.setFilter((value) -> value.isEmpty() || value.matches("-?\\d{0,3}(\\.\\d{0,2})?"));
-            this.setValue(WindTunnelMountScreen.formatValue(initialValue));
+            setMaxLength(8);
+            setFilter(value -> value.isEmpty() || value.matches("-?\\d{0,3}(\\.\\d{0,2})?"));
+            setValue(formatValue(initialValue));
         }
 
+        @Override
         public void setFocused(boolean focused) {
-            boolean wasFocused = this.isFocused();
+            boolean wasFocused = isFocused();
             super.setFocused(focused);
             if (wasFocused && !focused) {
-                this.commitValue();
+                commitValue();
             }
-
         }
 
+        @Override
         public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-            if (!this.isFocused() || keyCode != 257 && keyCode != 335) {
-                return super.keyPressed(keyCode, scanCode, modifiers);
-            } else {
-                this.commitValue();
-                this.setFocused(false);
+            if (isFocused() && (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER)) {
+                commitValue();
+                setFocused(false);
                 return true;
             }
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
 
         private void commitValue() {
-            if (!WindTunnelMountScreen.this.suppressUpdates && !this.getValue().isEmpty() && !"-".equals(this.getValue())) {
-                double parsed = Mth.clamp(Double.parseDouble(this.getValue()), this.minValue, this.maxValue);
-                String clamped = WindTunnelMountScreen.formatValue(parsed);
-                if (!clamped.equals(this.getValue())) {
-                    this.setValue(clamped);
-                }
-
-                this.onApply.accept(parsed);
+            if (suppressUpdates || getValue().isEmpty() || "-".equals(getValue())) {
+                return;
             }
+            // Clamp at commit time so typing stays permissive while the field is focused.
+            double parsed = Mth.clamp(Double.parseDouble(getValue()), minValue, maxValue);
+            String clamped = formatValue(parsed);
+            if (!clamped.equals(getValue())) {
+                setValue(clamped);
+            }
+            onApply.accept(parsed);
         }
+    }
+
+    private static double normalize(double value, double min, double max) {
+        return (value - min) / (max - min);
+    }
+
+    private static double denormalize(double value, double min, double max) {
+        double scaled = min + value * (max - min);
+        return Math.round(scaled * 100.0D) / 100.0D;
     }
 }

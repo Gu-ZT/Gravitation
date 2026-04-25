@@ -238,7 +238,7 @@ public class WindTunnelControllerScreen extends AbstractContainerScreen<WindTunn
     private void sendSettings() {
         if (!this.suppressUpdates) {
             this.waitingForServerState = true;
-            this.pendingSyncTicks = 8;
+            this.pendingSyncTicks = CLIENT_EDIT_GRACE_TICKS;
             this.lastSentLength = this.targetLength;
             this.lastSentAirspeed = this.targetAirspeed;
             this.lastSentEnabled = this.enabled;
@@ -477,7 +477,7 @@ public class WindTunnelControllerScreen extends AbstractContainerScreen<WindTunn
         }
 
         private int stepSize() {
-            return Screen.hasShiftDown() ? 5 : 1;
+            return Screen.hasShiftDown() ? LARGE_STEP : 1;
         }
     }
 }
