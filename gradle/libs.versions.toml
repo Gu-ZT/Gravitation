@@ -14,7 +14,7 @@ registrate = "MC1.21-1.3.0+67"
 cc_tweaked = "1.116.1"
 
 [libraries]
-#anvillib-network = { group = "dev.anvilcraft.lib", name = "anvillib-network-neoforge-1.21.1", version.ref = "anvillib" }
+anvillib-network = { group = "dev.anvilcraft.lib", name = "anvillib-network-neoforge-1.21.1", version.ref = "anvillib" }
 anvillib-util = { group = "dev.anvilcraft.lib", name = "anvillib-util-neoforge-1.21.1", version.ref = "anvillib" }
 anvillib-registrum = { group = "dev.anvilcraft.lib", name = "anvillib-registrum-neoforge-1.21.1", version.ref = "anvillib" }
 anvillib-config = { group = "dev.anvilcraft.lib", name = "anvillib-config-neoforge-1.21.1", version.ref = "anvillib" }
@@ -32,7 +32,7 @@ ccTweaked-forgeApi = { group = "cc.tweaked", name = "cc-tweaked-1.21.1-forge-api
 ccTweaked = { group = "cc.tweaked", name = "cc-tweaked-1.21.1-forge", version.ref = "cc_tweaked" }
 
 [bundles]
-anvillib = ['anvillib-util', 'anvillib-registrum', 'anvillib-config']
+anvillib = ['anvillib-network', 'anvillib-util', 'anvillib-registrum', 'anvillib-config']
 simulated = ['flywheel', 'sable', 'simulated', 'offroad', 'aeronautics']
 ccTweakedApi = ['ccTweaked-coreApi', 'ccTweaked-forgeApi']
 

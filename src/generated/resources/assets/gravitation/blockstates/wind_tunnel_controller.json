@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "gravitation:block/wind_tunnel_controller"
+    }
+  }
+}
