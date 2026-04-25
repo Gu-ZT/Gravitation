@@ -135,17 +135,22 @@ public record WindTunnelFlowField(
     }
 
     private static DuctProbe findSealedDuctLength(Level level, BlockPos origin, Direction direction, int maxRange) {
-        Set<BlockPos> sectionOffsets = collectSectionOffsets(level, origin, direction);
-        if (sectionOffsets.isEmpty()) {
+        Set<BlockPos> activeSectionOffsets = collectSectionOffsets(level, origin, direction);
+        if (activeSectionOffsets.isEmpty()) {
             return new DuctProbe(0, false);
         }
 
         Direction[] sideDirections = getSideDirections(direction.getAxis());
         // Start sealing checks at the first block in front of the concentrator face.
         for (int distance = 1; distance <= maxRange; ++distance) {
-            if (!isLayerPassableAndEdgeSealed(level, origin, direction, distance, sectionOffsets, sideDirections)) {
+            Set<BlockPos> nextSectionOffsets = collectPassableOffsetsAtLayer(level, origin, direction, distance, activeSectionOffsets);
+            if (nextSectionOffsets.isEmpty()) {
                 return new DuctProbe(distance - 1, false);
             }
+            if (!isLayerEdgeSealed(level, origin, direction, distance, nextSectionOffsets, sideDirections)) {
+                return new DuctProbe(distance - 1, false);
+            }
+            activeSectionOffsets = nextSectionOffsets;
         }
 
         return new DuctProbe(maxRange, true);
@@ -178,7 +183,24 @@ public record WindTunnelFlowField(
         return sectionOffsets;
     }
 
-    private static boolean isLayerPassableAndEdgeSealed(
+    private static Set<BlockPos> collectPassableOffsetsAtLayer(
+        Level level,
+        BlockPos origin,
+        Direction direction,
+        int distance,
+        Set<BlockPos> previousSectionOffsets
+    ) {
+        Set<BlockPos> passableOffsets = new HashSet<>();
+        for (BlockPos offset : previousSectionOffsets) {
+            BlockPos probePos = origin.offset(offset).relative(direction, distance);
+            if (level.isLoaded(probePos) && isDuctPassable(level, probePos)) {
+                passableOffsets.add(offset);
+            }
+        }
+        return passableOffsets;
+    }
+
+    private static boolean isLayerEdgeSealed(
         Level level,
         BlockPos origin,
         Direction direction,
@@ -186,12 +208,6 @@ public record WindTunnelFlowField(
         Set<BlockPos> sectionOffsets,
         Direction[] sideDirections
     ) {
-        for (BlockPos offset : sectionOffsets) {
-            BlockPos probePos = origin.offset(offset).relative(direction, distance);
-            if (!level.isLoaded(probePos) || !isDuctPassable(level, probePos)) {
-                return false;
-            }
-        }
 
         // For arbitrary cross-sections, only enforce sealing on perimeter edges.
         for (BlockPos offset : sectionOffsets) {

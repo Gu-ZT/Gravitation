@@ -64,11 +64,11 @@ public class WindTunnelMountInterfaceBlock extends Block {
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         } else if (!(Sable.HELPER.getContaining(level, pos) instanceof ServerSubLevel)) {
-            player.displayClientMessage(Component.translatable("block.windtunnel.wind_tunnel_mount_interface.not_on_aircraft"), true);
+            player.displayClientMessage(Component.translatable("block.gravitation.wind_tunnel_mount_interface.not_on_aircraft"), true);
             return InteractionResult.CONSUME;
         } else {
             WindTunnelMountSelection.store(player, level.dimension(), pos);
-            player.displayClientMessage(Component.translatable("block.windtunnel.wind_tunnel_mount_interface.selected"), true);
+            player.displayClientMessage(Component.translatable("block.gravitation.wind_tunnel_mount_interface.selected"), true);
             return InteractionResult.CONSUME;
         }
     }

@@ -13,10 +13,9 @@ public class LangHandler {
         ConfigData.readConfigClass(provider, GravitationConfig.class);
         provider.add("block.gravitation.fan_concentrator.goggles.title", "Duct Diagnostics");
         provider.add("block.gravitation.fan_concentrator.goggles.length", "Duct Length: %s");
-
+        provider.add("block.gravitation.fan_concentrator.goggles.speed", "Wind Speed: %s");
         provider.add("block.gravitation.wind_tunnel_mount_interface.selected", "Mount interface selected");
         provider.add("block.gravitation.wind_tunnel_mount_interface.not_on_aircraft", "Mount interface must be placed on an aircraft");
-
         provider.add("block.gravitation.wind_tunnel_mount.locked", "Locked");
         provider.add("block.gravitation.wind_tunnel_mount.unlocked", "Unlocked");
         provider.add("block.gravitation.wind_tunnel_mount.flow_direction", "Flow Direction");

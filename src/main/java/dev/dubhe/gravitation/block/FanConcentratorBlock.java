@@ -89,11 +89,11 @@ public class FanConcentratorBlock extends BaseEntityBlock implements EntityBlock
         if (blockEntityType != ModBlockEntities.FAN_CONCENTRATOR.get()) {
             return null;
         } else {
-            return level.isClientSide ? createTickerHelper(
+            return createTickerHelper(
                 blockEntityType,
                 ModBlockEntities.FAN_CONCENTRATOR.get(),
-                FanConcentratorBlockEntity::clientTick
-            ) : null;
+                level.isClientSide ? FanConcentratorBlockEntity::clientTick : FanConcentratorBlockEntity::serverTick
+            );
         }
     }
 

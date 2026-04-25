@@ -30,6 +30,7 @@ import javax.annotation.Nullable;
 public class FanConcentratorBlockEntity extends SyncedBlockEntity implements IAirCurrentSource, IHaveGoggleInformation {
     private static final float MIN_PARTICLE_SPAWN_CHANCE = 0.15F;
     private static final float MAX_PARTICLE_SPAWN_CHANCE = 0.85F;
+    private static final int DUCT_RECHECK_INTERVAL = 10;
     private final AirCurrent airCurrent;
     private boolean airCurrentDirty = true;
     private Direction cachedFacing;
@@ -54,6 +55,10 @@ public class FanConcentratorBlockEntity extends SyncedBlockEntity implements IAi
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, FanConcentratorBlockEntity blockEntity) {
         blockEntity.tickAirFlowParticles();
+    }
+
+    public static void serverTick(Level level, BlockPos pos, BlockState state, FanConcentratorBlockEntity blockEntity) {
+        blockEntity.tickServerDuctState();
     }
 
     public boolean isActive() {
@@ -88,6 +93,7 @@ public class FanConcentratorBlockEntity extends SyncedBlockEntity implements IAi
     public void onTunnelStateChanged() {
         this.markAirCurrentDirty();
         this.refreshAirCurrentIfNeeded();
+        this.syncStateToClient();
     }
 
     public void onLoad() {
@@ -163,6 +169,7 @@ public class FanConcentratorBlockEntity extends SyncedBlockEntity implements IAi
         tooltip.add(Component.translatable("block.gravitation.fan_concentrator.goggles.title").withStyle(ChatFormatting.GRAY));
 
         double length = 0.0F;
+        double windSpeed = 0.0F;
         if (this.level != null) {
             Direction flowDirection = this.cachedFlowDirection != null ? this.cachedFlowDirection : this.getFacing();
             WindTunnelFlowField.DuctProbe probe = WindTunnelFlowField.probeSealedDuct(
@@ -172,11 +179,50 @@ public class FanConcentratorBlockEntity extends SyncedBlockEntity implements IAi
                 dev.dubhe.gravitation.Gravitation.CONFIG.windTunnel.maxRange
             );
             length = probe.length();
+            if (this.cachedFlowField != null) {
+                windSpeed = this.cachedFlowField.impulseMagnitude();
+            }
         }
 
         tooltip.add(Component.translatable("block.gravitation.fan_concentrator.goggles.length", String.format("%.2f", length))
             .withStyle(ChatFormatting.AQUA));
+        tooltip.add(Component.translatable("block.gravitation.fan_concentrator.goggles.speed", String.format("%.2f", windSpeed))
+            .withStyle(ChatFormatting.AQUA));
         return true;
+    }
+
+    private void tickServerDuctState() {
+        if (this.level == null || this.level.isClientSide) {
+            return;
+        }
+        long gameTime = this.level.getGameTime();
+        int tickOffset = Math.floorMod(this.worldPosition.hashCode(), DUCT_RECHECK_INTERVAL);
+        if (gameTime % DUCT_RECHECK_INTERVAL != tickOffset) {
+            return;
+        }
+
+        this.refreshAirCurrentIfNeeded();
+        Direction probeDirection = this.cachedFlowDirection != null ? this.cachedFlowDirection : this.getFacing();
+        WindTunnelFlowField.DuctProbe probe = WindTunnelFlowField.probeSealedDuct(
+            this.level,
+            this.worldPosition,
+            probeDirection,
+            dev.dubhe.gravitation.Gravitation.CONFIG.windTunnel.maxRange
+        );
+        double currentLength = this.cachedFlowField == null ? 0.0F : this.cachedFlowField.length();
+        if (Math.abs(probe.length() - currentLength) > 1.0E-4) {
+            this.markAirCurrentDirty();
+            this.refreshAirCurrentIfNeeded();
+            this.syncStateToClient();
+        }
+    }
+
+    private void syncStateToClient() {
+        if (this.level == null || this.level.isClientSide) {
+            return;
+        }
+        this.setChanged();
+        this.sendData();
     }
 
     private void tickAirFlowParticles() {
