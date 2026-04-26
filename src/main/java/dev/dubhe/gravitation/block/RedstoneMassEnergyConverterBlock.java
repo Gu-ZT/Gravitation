@@ -52,7 +52,7 @@ public class RedstoneMassEnergyConverterBlock extends CasingBlock implements IBE
         if (thisPower == getPower) {
             return;
         }
-        level.setBlock(pos, state.setValue(POWER, getPower), 2);
+        level.setBlock(pos, state.setValue(POWER, getPower), 3);
     }
 
     public static double getMass(BlockGetter level, BlockPos pos, BlockState blockState) {

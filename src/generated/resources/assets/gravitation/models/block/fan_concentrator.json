@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gravitation:block/redstone_mass_energy_converter"
+    "all": "gravitation:block/fan_concentrator"
   }
 }

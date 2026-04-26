@@ -2,9 +2,6 @@ dependencies {
     implementation(libs.bundles.anvillib)
     jarJar(libs.bundles.anvillib)
 
-    implementation(libs.bundles.mixinsquared)
-    jarJar(libs.mixinsquared)
-
     compileOnly libs.jsr305
     compileOnly libs.jeiApi
     runtimeOnly libs.jei
@@ -14,4 +11,7 @@ dependencies {
         exclude group: "com.tterrag.registrate"
         exclude group: "cc.tweaked"
     }
+
+    compileOnly libs.bundles.ccTweakedApi
+    runtimeOnly libs.ccTweaked
 }

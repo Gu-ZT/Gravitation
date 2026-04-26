@@ -27,10 +27,17 @@ repositories {
     }
     maven {  // Registrate
         name = "Ithundxr Maven"
-       url = "https://maven.ithundxr.dev/snapshots"
+        url = "https://maven.ithundxr.dev/snapshots"
     }
     maven { // Veil
         name = 'BlameJared Maven'
         url = 'https://maven.blamejared.com'
+    }
+    maven { // CC Tweaked
+        name = "SquidDev Maven"
+        url = "https://maven.squiddev.cc"
+        content {
+            includeGroup("cc.tweaked")
+        }
     }
 }
