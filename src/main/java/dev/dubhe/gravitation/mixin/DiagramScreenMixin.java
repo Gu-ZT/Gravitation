@@ -8,7 +8,6 @@ import dev.simulated_team.simulated.content.entities.diagram.DiagramConfig;
 import dev.simulated_team.simulated.content.entities.diagram.screen.DiagramScreen;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.ImageButton;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -58,8 +57,8 @@ public abstract class DiagramScreenMixin extends Screen implements DiagramScreen
         final int diagramY = this.height / 2 - DiagramScreen.DIAGRAM_TEXTURE.height / 2;
 
         this.gravitation$exportButton = new ImageButton(
-            diagramX + 9,
-            diagramY + 9 + 20 * 4,
+            diagramX + 9 - 1,
+            diagramY + 9 + 20 * 4 - 1,
             16,
             16,
             GRAVITATION$BUTTON_SPRITES,

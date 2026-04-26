@@ -1,0 +1,9 @@
+{
+  "vertex": "simulated:contraption_diagram/outline_diagram",
+  "fragment": "gravitation:diagram_export/outline_diagram_export",
+  "textures": {
+    "Palette": "simulated:textures/effects/diagram_palette.png",
+    "Dither": "simulated:textures/effects/dither.png"
+  }
+}
+

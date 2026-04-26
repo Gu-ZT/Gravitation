@@ -17,6 +17,11 @@ import dev.ryanhcode.sable.sublevel.ClientSubLevel;
 import dev.ryanhcode.sable.sublevel.plot.LevelPlot;
 import dev.simulated_team.simulated.content.entities.diagram.DiagramConfig;
 import dev.simulated_team.simulated.content.entities.diagram.screen.DiagramScreen;
+import dev.simulated_team.simulated.util.SimpleSubLevelGroupRenderer;
+import foundry.veil.api.client.render.VeilRenderSystem;
+import foundry.veil.api.client.render.post.PostPipeline;
+import foundry.veil.api.client.render.post.PostProcessingManager;
+import net.createmod.catnip.theme.Color;
 import foundry.veil.api.client.render.framebuffer.AdvancedFbo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -51,6 +56,13 @@ public final class ContraptionDiagramExporter {
     private static final int FOOTER_KEY_R = 255;
     private static final int FOOTER_KEY_G = 0;
     private static final int FOOTER_KEY_B = 255;
+
+    /**
+     * Gravitation 专用的导出后处理管线（不含游戏内 UI 控件的遮挡区域切除）。
+     * 文件路径：assets/gravitation/pinwheel/post/diagram_export.json
+     */
+    private static final ResourceLocation EXPORT_PIPELINE =
+        ResourceLocation.fromNamespaceAndPath("gravitation", "diagram_export");
 
     private ContraptionDiagramExporter() {
     }
@@ -145,8 +157,19 @@ public final class ContraptionDiagramExporter {
         }
     }
 
-    // ---------- 场景渲染（Simulated DiagramScreen.draw） ----------
+    // ---------- 场景渲染 ----------
 
+    /**
+     * 渲染机械体场景到指定 FBO。
+     * <p>
+     * 优先使用 Gravitation 自定义导出管线（{@link #EXPORT_PIPELINE}），
+     * 该管线与 Simulated 的 diagram 管线完全一致，但 {@code sdScene()} 中
+     * 移除了游戏内按钮列和旋转 Gizmo 的遮挡切除区域——这两处硬编码的
+     * 屏幕像素坐标仅在游戏内渲染时需要避让 UI，导出时不存在任何覆盖其上
+     * 的控件，切除区域会导致导出图中左上角等位置出现透明缺口。
+     * <p>
+     * 若 Veil 因某种原因未能加载导出管线，则回退至 {@link DiagramScreen#draw}。
+     */
     private static void renderDiagramScene(
         ClientSubLevel subLevel,
         DiagramConfig config,
@@ -181,24 +204,50 @@ public final class ContraptionDiagramExporter {
         final Vector3d localCameraPosition = plotBoundsCenter.add(localOrientation.transform(new Vector3d(0, 0, radius)), new Vector3d());
         final Pose3dc renderPose = subLevel.renderPose(partialTicks);
         final Vector3d cameraPosition = new Vector3d(localCameraPosition);
-
         renderPose.transformPosition(cameraPosition);
-        DiagramScreen.draw(
-            subLevel,
-            partialTicks,
-            localOrientation,
-            projectionMatrix,
-            cameraPosition,
-            renderWidth,
-            renderHeight,
-            sceneFbo,
-            outlineFbo,
-            finalFbo,
-            0.25f,
-            1.0f,
-            0x2E3032,
-            0x696965
-        );
+
+        // 尝试使用导出专用管线（无按钮 / Gizmo 切除）
+        final PostProcessingManager postManager = VeilRenderSystem.renderer().getPostProcessingManager();
+        final PostPipeline exportPipeline = postManager.getPipeline(EXPORT_PIPELINE);
+
+        if (exportPipeline != null) {
+            // 1. 渲染几何体到 sceneFbo（与 DiagramScreen.draw 中完全相同的流程）
+            final Quaternionf orientation = new Quaternionf(renderPose.orientation()).conjugate();
+            orientation.premul(localOrientation.conjugate(new Quaternionf()));
+
+            sceneFbo.bind(true);
+            sceneFbo.clear();
+            SimpleSubLevelGroupRenderer.renderChain(
+                subLevel, sceneFbo, new Matrix4f(), projectionMatrix, cameraPosition, orientation, partialTicks
+            );
+
+            // 2. 配置导出管线 uniform（与 DiagramScreen.draw 使用相同值）
+            final Color lineColor = new Color(0x2E3032);
+            final Color lineShadowColor = new Color(0x696965);
+            exportPipeline.getUniformSafe("LineColor").setVector(
+                lineColor.getRed() / 255.0f, lineColor.getGreen() / 255.0f, lineColor.getBlue() / 255.0f, 1.0f
+            );
+            exportPipeline.getUniformSafe("LineShadowColor").setVector(
+                lineShadowColor.getRed() / 255.0f, lineShadowColor.getGreen() / 255.0f, lineShadowColor.getBlue() / 255.0f, 1.0f
+            );
+            exportPipeline.getUniformSafe("InSize").setVector((float) renderWidth, (float) renderHeight);
+            exportPipeline.getUniformSafe("PaletteOffset").setFloat(0.25f);
+            exportPipeline.getUniformSafe("FadeScale").setFloat(1.0f);
+
+            // 3. 绑定 FBO 并执行后处理（与 DiagramScreen.draw 使用相同的 simulated 命名空间 FBO 名称）
+            final PostPipeline.Context context = postManager.getPostPipelineContext();
+            context.setFramebuffer(ResourceLocation.fromNamespaceAndPath("simulated", "diagram"), sceneFbo);
+            context.setFramebuffer(ResourceLocation.fromNamespaceAndPath("simulated", "diagram_outlined"), outlineFbo);
+            context.setFramebuffer(ResourceLocation.fromNamespaceAndPath("simulated", "diagram_final"), finalFbo);
+            postManager.runPipeline(exportPipeline, false);
+        } else {
+            // 回退：使用 Simulated 原始管线（含按钮 / Gizmo 切除，可能在左上角产生缺口）
+            DiagramScreen.draw(
+                subLevel, partialTicks, localOrientation, projectionMatrix, cameraPosition,
+                renderWidth, renderHeight, sceneFbo, outlineFbo, finalFbo,
+                0.25f, 1.0f, 0x2E3032, 0x696965
+            );
+        }
     }
 
     // ---------- CPU 合成工具方法 ----------
