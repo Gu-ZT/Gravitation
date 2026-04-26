@@ -4,13 +4,7 @@ import com.simibubi.create.foundation.blockEntity.SyncedBlockEntity;
 import dev.dubhe.gravitation.block.WindTunnelMountBlock;
 import dev.dubhe.gravitation.windtunnel.WindTunnelMountMeasurement;
 import dev.dubhe.gravitation.windtunnel.WindTunnelMountService;
-import dev.dubhe.gravitation.windtunnel.WindTunnelWindProvider;
 import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintHandle;
-import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
-import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
-import dev.ryanhcode.sable.companion.math.BoundingBox3ic;
-import dev.ryanhcode.sable.sublevel.ServerSubLevel;
-import dev.ryanhcode.sable.sublevel.SubLevel;
 import lombok.Getter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -22,16 +16,11 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import org.joml.Vector3d;
-import org.joml.Vector3dc;
 
 import java.util.UUID;
 import javax.annotation.Nullable;
 
 public class WindTunnelMountBlockEntity extends SyncedBlockEntity {
-    private static final double AXIS_EPSILON = 1.0E-6;
-    private static final Vector3d WORLD_UP = new Vector3d(0.0F, 1.0F, 0.0F);
-    private static final Vector3d WORLD_NORTH = new Vector3d(0.0F, 0.0F, -1.0F);
     private static final String BOUND_SUBLEVEL_KEY = "BoundSubLevel";
     private static final String INTERFACE_POS_KEY = "InterfacePos";
     private static final String INTERFACE_FACING_KEY = "InterfaceFacing";
@@ -128,9 +117,6 @@ public class WindTunnelMountBlockEntity extends SyncedBlockEntity {
         this.boundSubLevelId = subLevelId;
         this.interfacePos = interfacePos.immutable();
         this.interfaceFacing = interfaceFacing;
-        Vector3d interfaceWorldCenter = resolveSampleWorldPosition(level, subLevelId, this.interfacePos);
-        this.flowDirection = resolveInitialFlowDirection(level, interfaceWorldCenter, interfaceFacing);
-        initializeOffsetsFromCurrentInterface(interfaceFacing, interfaceWorldCenter);
         this.measurement = WindTunnelMountMeasurement.EMPTY;
         this.poseDirty = true;
         BlockState state = getBlockState();
@@ -313,84 +299,5 @@ public class WindTunnelMountBlockEntity extends SyncedBlockEntity {
         return direction != null ? direction : fallback;
     }
 
-    private Direction resolveInitialFlowDirection(ServerLevel level, Vector3d samplePos, Direction fallbackFacing) {
-        Vector3dc windVelocity = WindTunnelWindProvider.getWindVelocityAt(samplePos, level);
-        if (windVelocity == null) {
-            return fallbackFacing;
-        }
-
-        double absX = Math.abs(windVelocity.x());
-        double absY = Math.abs(windVelocity.y());
-        double absZ = Math.abs(windVelocity.z());
-        double max = Math.max(absX, Math.max(absY, absZ));
-        if (max <= 1.0E-6) {
-            return fallbackFacing;
-        }
-        if (max == absX) {
-            return windVelocity.x() >= 0.0F ? Direction.EAST : Direction.WEST;
-        }
-        if (max == absY) {
-            return windVelocity.y() >= 0.0F ? Direction.UP : Direction.DOWN;
-        }
-        return windVelocity.z() >= 0.0F ? Direction.SOUTH : Direction.NORTH;
-    }
-
-    private Vector3d resolveSampleWorldPosition(ServerLevel level, UUID subLevelId, BlockPos storedPos) {
-        Vector3d storedCenter = toCenter(storedPos);
-        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
-        if (container == null) {
-            return storedCenter;
-        }
-        SubLevel maybeSubLevel = container.getSubLevel(subLevelId);
-        if (!(maybeSubLevel instanceof ServerSubLevel subLevel)) {
-            return storedCenter;
-        }
-
-        BoundingBox3ic plotBounds = subLevel.getPlot().getBoundingBox();
-        if (plotBounds != null && plotBounds.contains(storedCenter)) {
-            return subLevel.logicalPose().transformPosition(storedCenter, new Vector3d());
-        }
-        return storedCenter;
-    }
-
-    private void initializeOffsetsFromCurrentInterface(Direction mountForward, Vector3d interfaceWorldCenter) {
-        Vector3d delta = interfaceWorldCenter.sub(toCenter(this.worldPosition), new Vector3d());
-        Basis basis = Basis.fromForward(mountForward);
-        this.offsetX = clampOffset(delta.dot(basis.right()));
-        this.offsetY = clampOffset(delta.dot(basis.up()));
-        this.offsetZ = clampOffset(delta.dot(basis.forward()));
-    }
-
-    private static Vector3d toCenter(BlockPos pos) {
-        return new Vector3d((double) pos.getX() + 0.5F, (double) pos.getY() + 0.5F, (double) pos.getZ() + 0.5F);
-    }
-
-    private record Basis(Vector3d forward, Vector3d up, Vector3d right) {
-        private static Basis fromForward(Direction forwardDirection) {
-            Vector3d forward = directionVector(forwardDirection).normalize();
-            Vector3d upReference = Math.abs(forward.dot(WORLD_UP)) > 0.999
-                                   ? new Vector3d(WORLD_NORTH)
-                                   : new Vector3d(WORLD_UP);
-            Vector3d right = new Vector3d(forward).cross(upReference);
-            if (right.lengthSquared() <= AXIS_EPSILON) {
-                right.set(1.0F, 0.0F, 0.0F);
-            } else {
-                right.normalize();
-            }
-
-            Vector3d up = new Vector3d(right).cross(forward);
-            if (up.lengthSquared() <= AXIS_EPSILON) {
-                up.set(WORLD_UP);
-            } else {
-                up.normalize();
-            }
-
-            return new Basis(forward, up, right);
-        }
-    }
-
-    private static Vector3d directionVector(Direction direction) {
-        return new Vector3d(direction.getStepX(), direction.getStepY(), direction.getStepZ());
-    }
 
 }
