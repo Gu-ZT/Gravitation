@@ -28,6 +28,7 @@
   "gravitation.configuration.wind_tunnel.max_range": "Max Range",
   "gravitation.configuration.wind_tunnel.max_range.tooltip": "Maximum number of open blocks scanned in front of a wind tunnel.",
   "gravitation.configuration.wind_tunnel.tooltip": "Wind Tunnel",
+  "gravitation.diagram.export": "Export Contraption Diagram To PNG",
   "gravitation.diagram.export.failure": "Contraption diagram PNG export failed: %s",
   "gravitation.diagram.export.success": "Exported %s contraption diagram image(s) to: %s",
   "gravitation.simulated_section.gravitation": "Gravitation",

@@ -14,6 +14,7 @@ public class LangHandler {
         provider.add("block.gravitation.fan_concentrator.goggles.title", "Duct Diagnostics");
         provider.add("block.gravitation.fan_concentrator.goggles.length", "Duct Length: %s");
         provider.add("block.gravitation.fan_concentrator.goggles.speed", "Wind Speed: %s");
+        provider.add("gravitation.diagram.export", "Export Contraption Diagram To PNG");
         provider.add("gravitation.diagram.export.failure", "Contraption diagram PNG export failed: %s");
         provider.add("gravitation.diagram.export.success", "Exported %s contraption diagram image(s) to: %s");
     }
