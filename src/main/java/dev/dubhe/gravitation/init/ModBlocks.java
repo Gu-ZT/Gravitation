@@ -1,13 +1,10 @@
 package dev.dubhe.gravitation.init;
 
 import com.simibubi.create.AllBlocks;
-import com.simibubi.create.AllItems;
 import dev.anvilcraft.lib.v2.registrum.providers.RegistrumRecipeProvider;
 import dev.anvilcraft.lib.v2.registrum.util.entry.BlockEntry;
 import dev.dubhe.gravitation.block.RedstoneMassEnergyConverterBlock;
 import dev.dubhe.gravitation.block.FanConcentratorBlock;
-import dev.dubhe.gravitation.block.WindTunnelMountBlock;
-import dev.dubhe.gravitation.block.WindTunnelMountInterfaceBlock;
 import dev.eriksonn.aeronautics.index.AeroItems;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
@@ -81,52 +78,6 @@ public class ModBlocks {
             .unlockedBy("has_iron_bars", RegistrumRecipeProvider.has(Items.IRON_BARS))
             .unlockedBy("has_shaft", RegistrumRecipeProvider.has(AllBlocks.SHAFT.get()))
             .unlockedBy("has_andesite_casing", RegistrumRecipeProvider.has(AllBlocks.ANDESITE_CASING.get()))
-            .save(provider)
-        )
-        .register();
-
-    public static final BlockEntry<WindTunnelMountBlock> WIND_TUNNEL_MOUNT = REGISTRUM
-        .block("wind_tunnel_mount", WindTunnelMountBlock::new)
-        .properties(properties -> properties
-            .mapColor(MapColor.METAL)
-            .strength(4.0F, 8.0F)
-            .sound(SoundType.METAL)
-            .requiresCorrectToolForDrops()
-        )
-        .simpleItem()
-        .recipe((context, provider) -> ShapedRecipeBuilder
-            .shaped(RecipeCategory.MISC, context.get())
-            .pattern("I I")
-            .pattern("ICI")
-            .pattern("BBB")
-            .define('I', Items.IRON_INGOT)
-            .define('C', AllBlocks.ANDESITE_CASING.get())
-            .define('B', Items.SMOOTH_STONE_SLAB)
-            .unlockedBy("has_iron_ingot", RegistrumRecipeProvider.has(Items.IRON_INGOT))
-            .unlockedBy("has_andesite_casing", RegistrumRecipeProvider.has(AllBlocks.ANDESITE_CASING.get()))
-            .unlockedBy("has_smooth_stone_slab", RegistrumRecipeProvider.has(Items.SMOOTH_STONE_SLAB))
-            .save(provider)
-        )
-        .register();
-
-    public static final BlockEntry<WindTunnelMountInterfaceBlock> WIND_TUNNEL_MOUNT_INTERFACE = REGISTRUM
-        .block("wind_tunnel_mount_interface", WindTunnelMountInterfaceBlock::new)
-        .properties(properties -> properties
-            .mapColor(MapColor.COLOR_YELLOW)
-            .strength(3.0F, 6.0F)
-            .sound(SoundType.COPPER)
-            .requiresCorrectToolForDrops()
-        )
-        .simpleItem()
-        .recipe((context, provider) -> ShapedRecipeBuilder
-            .shaped(RecipeCategory.MISC, context.get())
-            .pattern(" I ")
-            .pattern("ICI")
-            .pattern(" I ")
-            .define('I', Items.IRON_INGOT)
-            .define('C', AllItems.BRASS_SHEET.get())
-            .unlockedBy("has_iron_ingot", RegistrumRecipeProvider.has(Items.IRON_INGOT))
-            .unlockedBy("has_brass_sheet", RegistrumRecipeProvider.has(AllItems.BRASS_SHEET.get()))
             .save(provider)
         )
         .register();

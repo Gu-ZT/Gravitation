@@ -7,10 +7,8 @@ import dev.dubhe.gravitation.init.ModBlocks;
 import dev.dubhe.gravitation.init.ModCapabilities;
 import dev.dubhe.gravitation.init.ModItems;
 import dev.dubhe.gravitation.init.ModMenus;
-import dev.dubhe.gravitation.windtunnel.WindTunnelMountService;
 import dev.dubhe.gravitation.windtunnel.WindTunnelWindProvider;
 import dev.ryanhcode.sable.api.SubLevelHelper;
-import dev.ryanhcode.sable.platform.SableEventPlatform;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -26,7 +24,6 @@ public class Gravitation {
     );
     public static final GravitationConfig CONFIG = ConfigManager.register(Gravitation.MOD_ID, GravitationConfig::new);
     private static boolean windProviderRegistered;
-    private static boolean mountHooksRegistered;
 
     public Gravitation(IEventBus modEventBus, ModContainer modContainer) {
         if (ModList.get().isLoaded("computercraft")) {
@@ -44,11 +41,6 @@ public class Gravitation {
             windProviderRegistered = true;
         }
 
-        if (!mountHooksRegistered) {
-            SableEventPlatform.INSTANCE.onPhysicsTick(WindTunnelMountService::prePhysicsTick);
-            SableEventPlatform.INSTANCE.onPostPhysicsTick(WindTunnelMountService::postPhysicsTick);
-            mountHooksRegistered = true;
-        }
     }
 
     public static ResourceLocation location(String path) {
