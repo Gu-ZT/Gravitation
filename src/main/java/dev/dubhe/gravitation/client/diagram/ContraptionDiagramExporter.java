@@ -24,6 +24,10 @@ import org.joml.Matrix4fStack;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -90,13 +94,11 @@ public final class ContraptionDiagramExporter {
 
             try (
                 NativeImage exportImage = createBackgroundImage(minecraft, preset);
-                NativeImage titleOverlay = renderTitleOverlay(minecraft, preset, access.gravitation$getDiagramName());
                 NativeImage sceneOverlay = readTexture(finalFbo.getColorTextureAttachment(0).getId(), preset.width, preset.height)
             ) {
                 stripSceneBackground(sceneOverlay);
-                stripBlackBackground(titleOverlay);
                 blendOnto(exportImage, sceneOverlay);
-                blendOnto(exportImage, titleOverlay);
+                drawFooterName(exportImage, access.gravitation$getDiagramName());
                 exportImage.writeToFile(outputFile);
             }
         } finally {
@@ -292,6 +294,63 @@ public final class ContraptionDiagramExporter {
                 if (red <= 2 && green <= 2 && blue <= 2) {
                     image.setPixelRGBA(x, y, FastColor.ABGR32.color(0, blue, green, red));
                 }
+            }
+        }
+    }
+
+    private static void drawFooterName(NativeImage image, String diagramName) {
+        if (diagramName == null || diagramName.isBlank()) {
+            return;
+        }
+
+        final BufferedImage buffered = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                final int abgr = image.getPixelRGBA(x, y);
+                final int argb = (FastColor.ABGR32.alpha(abgr) << 24)
+                    | (FastColor.ABGR32.red(abgr) << 16)
+                    | (FastColor.ABGR32.green(abgr) << 8)
+                    | FastColor.ABGR32.blue(abgr);
+                buffered.setRGB(x, y, argb);
+            }
+        }
+
+        final Graphics2D g = buffered.createGraphics();
+        try {
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            final int fontSize = Math.max(12, image.getWidth() / 120);
+            g.setFont(new Font("SansSerif", Font.PLAIN, fontSize));
+            final var fm = g.getFontMetrics();
+
+            final int textW = fm.stringWidth(diagramName);
+            final int padX = Math.max(4, fontSize / 3);
+            final int padY = Math.max(3, fontSize / 4);
+            final int rectW = textW + padX * 2;
+            final int rectH = fm.getAscent() + fm.getDescent() + padY * 2;
+            final int rectX = image.getWidth() - rectW - 6;
+            final int rectY = image.getHeight() - rectH - 5;
+
+            g.setColor(new java.awt.Color(DiagramScreen.BG_COLOR.getRGB(), true));
+            g.fillRect(rectX, rectY, rectW, rectH);
+
+            g.setColor(new java.awt.Color(DiagramScreen.TEXT_COLOR.getRGB(), true));
+            g.drawString(diagramName, rectX + padX, rectY + padY + fm.getAscent());
+        } finally {
+            g.dispose();
+        }
+
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                final int argb = buffered.getRGB(x, y);
+                final int abgr = FastColor.ABGR32.color(
+                    (argb >>> 24) & 0xFF,
+                    argb & 0xFF,
+                    (argb >>> 8) & 0xFF,
+                    (argb >>> 16) & 0xFF
+                );
+                image.setPixelRGBA(x, y, abgr);
             }
         }
     }
