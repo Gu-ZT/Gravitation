@@ -46,10 +46,8 @@ public final class ContraptionDiagramExporter {
     private static final DateTimeFormatter FILE_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
     private static final boolean FOOTER_OVERLAY_DEBUG_EXPORT = false;
     private static final boolean FOOTER_OVERLAY_RECT_TEST = false;
-    private static final int SCENE_CLEAR_R = 46;
-    private static final int SCENE_CLEAR_G = 48;
-    private static final int SCENE_CLEAR_B = 50;
-    private static final int SCENE_CLEAR_TOLERANCE = 2;
+    // SCENE_CLEAR_* constants removed: background transparency is now preserved via
+    // downloadTexture(0, false) and handled naturally by blendOnto()'s alpha check.
     private static final int FOOTER_KEY_R = 255;
     private static final int FOOTER_KEY_G = 0;
     private static final int FOOTER_KEY_B = 255;
@@ -112,7 +110,6 @@ public final class ContraptionDiagramExporter {
                 NativeImage backgroundImage = createBackgroundImage(minecraft, preset);
                 NativeImage sceneOverlay = readTexture(finalFbo.getColorTextureAttachment(0).getId(), renderWidth, renderHeight)
             ) {
-                stripSceneBackground(sceneOverlay);
                 blendOnto(backgroundImage, sceneOverlay);
 
                 // 3. 放大到目标输出分辨率后保存
@@ -229,34 +226,21 @@ public final class ContraptionDiagramExporter {
         }
     }
 
-    /** 直接从 GPU 纹理读回像素到 NativeImage */
+    /**
+     * 直接从 GPU 纹理读回像素到 NativeImage。
+     * 必须使用 opaque=false 以保留着色器输出的真实 alpha 通道。
+     * outline_diagram.fsh 用 `alpha * dither_mask.r` 编码了背景透明度与
+     * vignette 晕染效果；若用 opaque=true 会将所有像素强制为不透明，
+     * 破坏边缘的 dithered 渐隐以及背景的透明。
+     */
     private static NativeImage readTexture(int textureId, int width, int height) {
         final NativeImage image = new NativeImage(width, height, false);
         RenderSystem.bindTexture(textureId);
-        image.downloadTexture(0, true);
+        image.downloadTexture(0, false);
         image.flipY();
         return image;
     }
 
-    /** 将 DiagramScreen 渲染的固定背景色替换为透明，以便叠加到羊皮纸上 */
-    private static void stripSceneBackground(NativeImage scene) {
-        for (int y = 0; y < scene.getHeight(); y++) {
-            for (int x = 0; x < scene.getWidth(); x++) {
-                final int pixel = scene.getPixelRGBA(x, y);
-                final int red = FastColor.ABGR32.red(pixel);
-                final int green = FastColor.ABGR32.green(pixel);
-                final int blue = FastColor.ABGR32.blue(pixel);
-
-                if (Math.abs(red - SCENE_CLEAR_R) <= SCENE_CLEAR_TOLERANCE
-                    && Math.abs(green - SCENE_CLEAR_G) <= SCENE_CLEAR_TOLERANCE
-                    && Math.abs(blue - SCENE_CLEAR_B) <= SCENE_CLEAR_TOLERANCE) {
-                    scene.setPixelRGBA(x, y, FastColor.ABGR32.color(0, blue, green, red));
-                }
-            }
-        }
-    }
-
-    /** Alpha 混合：将 overlay 叠加到 destination 上 */
     private static void blendOnto(NativeImage destination, NativeImage overlay) {
         blendOnto(destination, overlay, 0, 0);
     }
