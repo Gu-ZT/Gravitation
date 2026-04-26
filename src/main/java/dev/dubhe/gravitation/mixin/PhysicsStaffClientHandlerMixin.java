@@ -16,11 +16,24 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.client.player.LocalPlayer;
 import org.joml.Vector3d;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.gen.Invoker;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import javax.annotation.Nullable;
 
 @Mixin(PhysicsStaffClientHandler.class)
 public abstract class PhysicsStaffClientHandlerMixin {
+    @Shadow
+    @Nullable
+    private PhysicsStaffClientHandler.ClientDragSession dragSession;
+
+    @Invoker("stopDragging")
+    public abstract void gravitation$invokeStopDragging();
+
     @Definition(id = "action", local = @Local(type = PhysicsStaffAction.class, argsOnly = true))
     @Definition(
         id = "START_DRAG",
@@ -55,6 +68,23 @@ public abstract class PhysicsStaffClientHandlerMixin {
         @Local(name = "subLevel") SubLevel subLevel
     ) {
         return this.gravitation$onItemUsedUtil(original, player, subLevel);
+    }
+
+    @Inject(method = "tick", at = @At("HEAD"))
+    private void gravitation$interruptWhenPlayerTouchesSubLevel(CallbackInfo ci) {
+        LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+        if (player == null || this.dragSession == null) {
+            return;
+        }
+        if (!player.getMainHandItem().is(ModItems.PHYSICS_STAFF) && !player.getOffhandItem().is(ModItems.PHYSICS_STAFF)) {
+            return;
+        }
+
+        if (this.gravitation$isPlayerCollidingWithAnySubLevel(player)
+            || this.gravitation$isPlayerStandingOnAnySubLevel(player)) {
+            this.gravitation$invokeStopDragging();
+            player.stopUsingItem();
+        }
     }
 
     @Unique
