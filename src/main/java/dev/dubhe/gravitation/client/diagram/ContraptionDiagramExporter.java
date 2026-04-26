@@ -4,6 +4,12 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexSorting;
 import dev.ryanhcode.sable.companion.math.BoundingBox3ic;
 import dev.ryanhcode.sable.companion.math.Pose3dc;
@@ -14,6 +20,8 @@ import dev.simulated_team.simulated.content.entities.diagram.screen.DiagramScree
 import foundry.veil.api.client.render.framebuffer.AdvancedFbo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
@@ -22,6 +30,10 @@ import org.joml.Matrix4fStack;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -32,10 +44,15 @@ import java.util.Locale;
 
 public final class ContraptionDiagramExporter {
     private static final DateTimeFormatter FILE_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+    private static final boolean FOOTER_OVERLAY_DEBUG_EXPORT = false;
+    private static final boolean FOOTER_OVERLAY_RECT_TEST = false;
     private static final int SCENE_CLEAR_R = 46;
     private static final int SCENE_CLEAR_G = 48;
     private static final int SCENE_CLEAR_B = 50;
     private static final int SCENE_CLEAR_TOLERANCE = 2;
+    private static final int FOOTER_KEY_R = 255;
+    private static final int FOOTER_KEY_G = 0;
+    private static final int FOOTER_KEY_B = 255;
 
     private ContraptionDiagramExporter() {
     }
@@ -99,12 +116,25 @@ public final class ContraptionDiagramExporter {
                 blendOnto(backgroundImage, sceneOverlay);
 
                 // 3. 放大到目标输出分辨率后保存
-                try (
-                    NativeImage exportImage = scaleImage(backgroundImage, preset.width, preset.height);
-                    NativeImage footerOverlay = renderFooterOverlay(minecraft, preset.width, preset.height, access.gravitation$getDiagramName())
-                ) {
-                    stripBlackBackground(footerOverlay);
-                    blendOnto(exportImage, footerOverlay);
+                final String diagramName = resolveFooterName(access, subLevel);
+                try (NativeImage exportImage = scaleImage(backgroundImage, preset.width, preset.height)) {
+                    if (!diagramName.isBlank()) {
+                        final FooterLayout footerLayout = computeFooterLayout(minecraft, preset.width, preset.height, diagramName);
+                        try (NativeImage footerOverlay = renderFooterOverlay(minecraft, footerLayout, diagramName)) {
+                            if (FOOTER_OVERLAY_DEBUG_EXPORT) {
+                                saveFooterOverlayDebug(footerOverlay, outputFile, "raw");
+                            }
+                            if (isFooterOverlayEmpty(footerOverlay)) {
+                                drawFooterFallbackJava2D(exportImage, diagramName, preset.backgroundWidth, preset.backgroundHeight);
+                            } else {
+                                stripFooterKeyBackground(footerOverlay);
+                                if (FOOTER_OVERLAY_DEBUG_EXPORT) {
+                                    saveFooterOverlayDebug(footerOverlay, outputFile, "stripped");
+                                }
+                                blendOnto(exportImage, footerOverlay, footerLayout.x(), footerLayout.y());
+                            }
+                        }
+                    }
                     exportImage.writeToFile(outputFile);
                 }
             }
@@ -226,40 +256,34 @@ public final class ContraptionDiagramExporter {
         }
     }
 
-    /** 将透明目标读回后产生的纯黑背景转回透明，避免覆盖整张导出图。 */
-    private static void stripBlackBackground(NativeImage image) {
-        for (int y = 0; y < image.getHeight(); y++) {
-            for (int x = 0; x < image.getWidth(); x++) {
-                final int pixel = image.getPixelRGBA(x, y);
-                final int alpha = FastColor.ABGR32.alpha(pixel);
-                final int red = FastColor.ABGR32.red(pixel);
-                final int green = FastColor.ABGR32.green(pixel);
-                final int blue = FastColor.ABGR32.blue(pixel);
-
-                if ((alpha == 0 || alpha == 255) && red <= 2 && green <= 2 && blue <= 2) {
-                    image.setPixelRGBA(x, y, FastColor.ABGR32.color(0, blue, green, red));
-                }
-            }
-        }
-    }
-
     /** Alpha 混合：将 overlay 叠加到 destination 上 */
     private static void blendOnto(NativeImage destination, NativeImage overlay) {
+        blendOnto(destination, overlay, 0, 0);
+    }
+
+    /** Alpha 混合：将 overlay 按指定偏移叠加到 destination 上 */
+    private static void blendOnto(NativeImage destination, NativeImage overlay, int offsetX, int offsetY) {
         final int width = Math.min(destination.getWidth(), overlay.getWidth());
         final int height = Math.min(destination.getHeight(), overlay.getHeight());
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
+                final int targetX = x + offsetX;
+                final int targetY = y + offsetY;
+                if (targetX < 0 || targetY < 0 || targetX >= destination.getWidth() || targetY >= destination.getHeight()) {
+                    continue;
+                }
+
                 final int source = overlay.getPixelRGBA(x, y);
                 final int sourceAlpha = FastColor.ABGR32.alpha(source);
                 if (sourceAlpha == 0) continue;
                 if (sourceAlpha == 255) {
-                    destination.setPixelRGBA(x, y, source);
+                    destination.setPixelRGBA(targetX, targetY, source);
                     continue;
                 }
 
-                final int target = destination.getPixelRGBA(x, y);
-                destination.setPixelRGBA(x, y, FastColor.ABGR32.color(
+                final int target = destination.getPixelRGBA(targetX, targetY);
+                destination.setPixelRGBA(targetX, targetY, FastColor.ABGR32.color(
                     blendChannel(sourceAlpha, 255, FastColor.ABGR32.alpha(target)),
                     blendChannel(sourceAlpha, FastColor.ABGR32.blue(source), FastColor.ABGR32.blue(target)),
                     blendChannel(sourceAlpha, FastColor.ABGR32.green(source), FastColor.ABGR32.green(target)),
@@ -273,12 +297,19 @@ public final class ContraptionDiagramExporter {
         return (srcV * srcA + dstV * (255 - srcA)) / 255;
     }
 
-    private static NativeImage renderFooterOverlay(Minecraft minecraft, int width, int height, String diagramName) {
-        if (diagramName.isBlank()) {
-            return new NativeImage(width, height, true);
-        }
+    private static void drawSolidRectDirect(int width, int height, int color) {
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        final BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        final Matrix4f matrix = new Matrix4f();
+        builder.addVertex(matrix, 0.0f, 0.0f, 0.0f).setColor(color);
+        builder.addVertex(matrix, 0.0f, height, 0.0f).setColor(color);
+        builder.addVertex(matrix, width, height, 0.0f).setColor(color);
+        builder.addVertex(matrix, width, 0.0f, 0.0f).setColor(color);
+        BufferUploader.drawWithShader(builder.buildOrThrow());
+    }
 
-        final TextureTarget target = new TextureTarget(width, height, false, Minecraft.ON_OSX);
+    private static NativeImage renderFooterOverlay(Minecraft minecraft, FooterLayout layout, String diagramName) {
+        final TextureTarget target = new TextureTarget(layout.width(), layout.height(), false, Minecraft.ON_OSX);
         boolean projectionBackedUp = false;
         boolean modelViewPushed = false;
 
@@ -286,25 +317,37 @@ public final class ContraptionDiagramExporter {
             RenderSystem.backupProjectionMatrix();
             projectionBackedUp = true;
 
-            RenderSystem.setProjectionMatrix(new Matrix4f().setOrtho(0.0F, width, height, 0.0F, 1000.0F, 21000.0F), VertexSorting.ORTHOGRAPHIC_Z);
+            RenderSystem.setProjectionMatrix(new Matrix4f().setOrtho(0.0F, layout.width(), layout.height(), 0.0F, -1.0F, 1.0F), VertexSorting.ORTHOGRAPHIC_Z);
 
             final Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
             modelViewStack.pushMatrix();
             modelViewPushed = true;
             modelViewStack.identity();
-            modelViewStack.translate(0.0F, 0.0F, -11000.0F);
             RenderSystem.applyModelViewMatrix();
 
             target.bindWrite(true);
-            target.setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
+            target.setClearColor(1.0F, 0.0F, 1.0F, 1.0F);
             target.clear(Minecraft.ON_OSX);
-            RenderSystem.viewport(0, 0, width, height);
+            RenderSystem.viewport(0, 0, layout.width(), layout.height());
+            // Reset potentially leaked state from previous scene rendering passes.
+            RenderSystem.disableScissor();
+            RenderSystem.disableDepthTest();
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
 
-            final GuiGraphics graphics = new GuiGraphics(minecraft, minecraft.renderBuffers().bufferSource());
-            renderFooterName(graphics, minecraft, width, height, diagramName);
-            graphics.flush();
-
-            return readTexture(target.getColorTextureId(), width, height);
+            if (FOOTER_OVERLAY_RECT_TEST) {
+                // Diagnostic path: bypass GuiGraphics/font and draw an opaque rect directly.
+                drawSolidRectDirect(layout.width(), layout.height(), 0xFFFFFFFF);
+            } else {
+                final MultiBufferSource.BufferSource overlayBuffer = MultiBufferSource.immediate(new ByteBufferBuilder(262144));
+                final GuiGraphics graphics = new GuiGraphics(minecraft, overlayBuffer);
+                renderFooterNameLocal(graphics, minecraft, layout, diagramName);
+                graphics.flush();
+            }
+            RenderSystem.enableDepthTest();
+            target.unbindWrite();
+            return readTexture(target.getColorTextureId(), layout.width(), layout.height());
         } finally {
             if (modelViewPushed) {
                 final Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
@@ -318,30 +361,114 @@ public final class ContraptionDiagramExporter {
         }
     }
 
-    private static void renderFooterName(GuiGraphics graphics, Minecraft minecraft, int width, int height, String diagramName) {
-        final int footerWidth = minecraft.font.width(diagramName);
-        final int padX = Math.max(6, minecraft.font.lineHeight / 2);
-        final int padY = Math.max(4, minecraft.font.lineHeight / 3);
-        final int rectW = footerWidth + padX * 2;
-        final int rectH = minecraft.font.lineHeight + padY * 2;
-        final int rectX = width - rectW - 16;
-        final int rectY = height - rectH - 16;
+    private static void stripFooterKeyBackground(NativeImage image) {
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                final int pixel = image.getPixelRGBA(x, y);
+                final int red = FastColor.ABGR32.red(pixel);
+                final int green = FastColor.ABGR32.green(pixel);
+                final int blue = FastColor.ABGR32.blue(pixel);
+                if (red == FOOTER_KEY_R && green == FOOTER_KEY_G && blue == FOOTER_KEY_B) {
+                    image.setPixelRGBA(x, y, FastColor.ABGR32.color(0, blue, green, red));
+                }
+            }
+        }
+    }
 
+    private static boolean isFooterOverlayEmpty(NativeImage image) {
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                final int pixel = image.getPixelRGBA(x, y);
+                if (FastColor.ABGR32.red(pixel) != FOOTER_KEY_R
+                    || FastColor.ABGR32.green(pixel) != FOOTER_KEY_G
+                    || FastColor.ABGR32.blue(pixel) != FOOTER_KEY_B) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private static void drawFooterFallbackJava2D(NativeImage image, String diagramName, int bgWidth, int bgHeight) {
+        final BufferedImage buffered = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                final int abgr = image.getPixelRGBA(x, y);
+                final int argb = (FastColor.ABGR32.alpha(abgr) << 24)
+                    | (FastColor.ABGR32.red(abgr) << 16)
+                    | (FastColor.ABGR32.green(abgr) << 8)
+                    | FastColor.ABGR32.blue(abgr);
+                buffered.setRGB(x, y, argb);
+            }
+        }
+
+        final Graphics2D g = buffered.createGraphics();
+        try {
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+            final int fontSize = Math.max(14, image.getWidth() / 15);
+            g.setFont(new Font("SansSerif", Font.PLAIN, fontSize));
+            final var fm = g.getFontMetrics();
+
+            final int textW = fm.stringWidth(diagramName);
+            // 2px margin in background-image pixel space, scaled up to output resolution
+            final int marginRight = Math.round(2.0f * image.getWidth() / bgWidth);
+            final int marginBottom = Math.round(2.0f * image.getHeight() / bgHeight);
+            final int rectW = textW + 4;  // 2px inner padding on each side
+            final int rectH = fm.getAscent() + fm.getDescent() + 2;
+            final int rectX = image.getWidth() - marginRight - rectW;
+            final int rectY = image.getHeight() - marginBottom - rectH;
+
+            g.setColor(new java.awt.Color(forceOpaque(DiagramScreen.BG_COLOR.getRGB()), true));
+            g.fillRect(rectX, rectY, rectW, rectH);
+            g.setColor(new java.awt.Color(forceOpaque(DiagramScreen.TEXT_COLOR.getRGB()), true));
+            g.drawString(diagramName, rectX + 2, rectY + fm.getAscent());
+        } finally {
+            g.dispose();
+        }
+
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                final int argb = buffered.getRGB(x, y);
+                image.setPixelRGBA(x, y, FastColor.ABGR32.color(
+                    (argb >>> 24) & 0xFF,
+                    argb & 0xFF,
+                    (argb >>> 8) & 0xFF,
+                    (argb >>> 16) & 0xFF
+                ));
+            }
+        }
+    }
+
+    private static FooterLayout computeFooterLayout(Minecraft minecraft, int width, int height, String diagramName) {
+        final int footerWidth = minecraft.font.width(diagramName);
+        final int rectX = width - footerWidth - 7;
+        final int rectY = height - 5 - minecraft.font.lineHeight;
+        final int rectW = footerWidth + 3;
+        final int rectH = minecraft.font.lineHeight + 2;
+        return new FooterLayout(rectX, rectY, rectW, rectH);
+    }
+
+    private static void renderFooterNameLocal(GuiGraphics graphics, Minecraft minecraft, FooterLayout layout, String diagramName) {
         graphics.fill(
-            rectX,
-            rectY,
-            rectX + rectW,
-            rectY + rectH,
-            DiagramScreen.BG_COLOR.getRGB()
+            0,
+            0,
+            layout.width(),
+            layout.height(),
+            forceOpaque(DiagramScreen.BG_COLOR.getRGB())
         );
         graphics.drawString(
             minecraft.font,
             diagramName,
-            rectX + padX,
-            rectY + padY,
-            DiagramScreen.TEXT_COLOR.getRGB(),
+            2,
+            2,
+            forceOpaque(DiagramScreen.TEXT_COLOR.getRGB()),
             false
         );
+    }
+
+    private static int forceOpaque(int color) {
+        return color | 0xFF000000;
     }
 
     /** 最近邻放大：从 backgroundWidth×backgroundHeight 缩放到输出分辨率 */
@@ -356,6 +483,28 @@ public final class ContraptionDiagramExporter {
             }
         }
         return scaled;
+    }
+
+    private static String resolveFooterName(DiagramScreenExportAccess access, ClientSubLevel subLevel) {
+        final String directName = access.gravitation$getDiagramName();
+        if (!directName.isBlank()) {
+            return directName;
+        }
+
+        final String subLevelName = subLevel.getName();
+        return subLevelName == null ? "" : subLevelName;
+    }
+
+    private static void saveFooterOverlayDebug(NativeImage footerOverlay, Path outputFile, String stage) {
+        try {
+            final String fileName = outputFile.getFileName().toString();
+            final int dot = fileName.lastIndexOf('.');
+            final String stem = dot >= 0 ? fileName.substring(0, dot) : fileName;
+            final Path debugPath = createUniqueFile(outputFile.getParent().resolve(stem + "_footer_overlay_" + stage + ".png"));
+            footerOverlay.writeToFile(debugPath);
+        } catch (IOException ignored) {
+            // Debug export should never fail the main export path.
+        }
     }
 
     // ---------- 通用工具 ----------
@@ -389,6 +538,9 @@ public final class ContraptionDiagramExporter {
         if (minecraft.player != null) {
             minecraft.player.displayClientMessage(message, false);
         }
+    }
+
+    private record FooterLayout(int x, int y, int width, int height) {
     }
 
     private enum ExportPreset {
