@@ -6,9 +6,13 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.dubhe.gravitation.Gravitation;
 import dev.dubhe.gravitation.init.ModItems;
+import dev.ryanhcode.sable.Sable;
+import dev.ryanhcode.sable.mixinterface.entity.entity_sublevel_collision.EntityMovementExtension;
 import dev.ryanhcode.sable.sublevel.SubLevel;
+import dev.ryanhcode.sable.sublevel.entity_collision.SubLevelEntityCollision;
 import dev.simulated_team.simulated.content.physics_staff.PhysicsStaffAction;
 import dev.simulated_team.simulated.content.physics_staff.PhysicsStaffClientHandler;
+import net.minecraft.core.BlockPos;
 import net.minecraft.client.player.LocalPlayer;
 import org.joml.Vector3d;
 import org.spongepowered.asm.mixin.Mixin;
@@ -56,9 +60,33 @@ public abstract class PhysicsStaffClientHandlerMixin {
     @Unique
     private boolean gravitation$onItemUsedUtil(boolean original, LocalPlayer player, SubLevel subLevel) {
         if (!player.getMainHandItem().is(ModItems.PHYSICS_STAFF) && !player.getOffhandItem().is(ModItems.PHYSICS_STAFF)) return original;
+        if (this.gravitation$isPlayerCollidingWithAnySubLevel(player)
+            || this.gravitation$isPlayerStandingOnAnySubLevel(player)) {
+            player.stopUsingItem();
+            return false;
+        }
         Vector3d size = subLevel.boundingBox().size();
         double sizeValue = size.x() * size.y() * size.z();
         if (sizeValue > Gravitation.CONFIG.physicsStaffAllowedMaxControlSize) return false;
         return original;
+    }
+
+    @Unique
+    private boolean gravitation$isPlayerCollidingWithAnySubLevel(LocalPlayer player) {
+        if (!(player instanceof EntityMovementExtension movementExtension)) {
+            return false;
+        }
+
+        SubLevelEntityCollision.CollisionInfo collisionInfo = movementExtension.sable$getCollisionInfo();
+        return collisionInfo != null
+               && ((collisionInfo.firstCollisions != null && !collisionInfo.firstCollisions.isEmpty())
+                   || collisionInfo.subLevelHorizontalCollision);
+    }
+
+    @Unique
+    private boolean gravitation$isPlayerStandingOnAnySubLevel(LocalPlayer player) {
+        BlockPos onPos = player.getOnPos();
+        return Sable.HELPER.getContaining(player.level(), onPos) != null
+               || Sable.HELPER.getTrackingOrVehicleSubLevel(player) != null;
     }
 }
