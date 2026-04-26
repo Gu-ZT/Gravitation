@@ -34,6 +34,24 @@ public abstract class PhysicsStaffClientHandlerMixin {
     @Invoker("stopDragging")
     public abstract void gravitation$invokeStopDragging();
 
+    @Inject(method = "onItemUsed", at = @At("HEAD"), cancellable = true)
+    private void gravitation$denyLockWhenDisabled(PhysicsStaffAction action, CallbackInfo ci) {
+        if (action != PhysicsStaffAction.LOCK || Gravitation.CONFIG.physicsStaffAllowLockSubLevel) {
+            return;
+        }
+
+        LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+        if (player == null) {
+            return;
+        }
+        if (!player.getMainHandItem().is(ModItems.PHYSICS_STAFF) && !player.getOffhandItem().is(ModItems.PHYSICS_STAFF)) {
+            return;
+        }
+
+        player.stopUsingItem();
+        ci.cancel();
+    }
+
     @Definition(id = "action", local = @Local(type = PhysicsStaffAction.class, argsOnly = true))
     @Definition(
         id = "START_DRAG",
@@ -102,6 +120,7 @@ public abstract class PhysicsStaffClientHandlerMixin {
     }
 
     @Unique
+    @SuppressWarnings("UnstableApiUsage")
     private boolean gravitation$isPlayerCollidingWithAnySubLevel(LocalPlayer player) {
         if (!(player instanceof EntityMovementExtension movementExtension)) {
             return false;

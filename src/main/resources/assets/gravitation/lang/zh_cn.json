@@ -25,6 +25,8 @@
   "block.gravitation.wind_tunnel_mount_interface.selected": "已选择支架接口",
   "gravitation.configuration.physics_staff_allowed_max_control_size": "物理手杖允许的最大控制尺寸",
   "gravitation.configuration.physics_staff_allowed_max_control_size.tooltip": "允许使用物理手杖控制的物理结构的最大尺寸",
+  "gravitation.configuration.physics_staff_allow_lock_sub_level": "允许物理手杖锁定物理结构",
+  "gravitation.configuration.physics_staff_allow_lock_sub_level.tooltip": "是否允许物理手杖执行锁定物理结构操作",
   "gravitation.configuration.redstone_mass_energy_converter_max_mass": "红石质能转换装置最大质量",
   "gravitation.configuration.redstone_mass_energy_converter_max_mass.tooltip": "红石质能转换装置的可调节最大质量",
   "gravitation.configuration.redstone_mass_energy_converter_min_mass": "红石质能转换装置最小质量",

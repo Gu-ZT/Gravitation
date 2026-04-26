@@ -23,6 +23,8 @@
   "block.gravitation.wind_tunnel_mount_interface": "ǝɔɐɟɹǝʇuI ʇunoW ꞁǝuun⟘ puᴉM",
   "block.gravitation.wind_tunnel_mount_interface.not_on_aircraft": "ʇɟɐɹɔɹᴉɐ uɐ uo pǝɔɐꞁd ǝq ʇsnɯ ǝɔɐɟɹǝʇuᴉ ʇunoW",
   "block.gravitation.wind_tunnel_mount_interface.selected": "pǝʇɔǝꞁǝs ǝɔɐɟɹǝʇuᴉ ʇunoW",
+  "gravitation.configuration.physics_staff_allow_lock_sub_level": "ꞁǝʌǝꞀ qnS ʞɔoꞀ ʍoꞁꞁⱯ ɟɟɐʇS sɔᴉsʎɥԀ",
+  "gravitation.configuration.physics_staff_allow_lock_sub_level.tooltip": "sꞁǝʌǝꞁ-qns ʞɔoꞁ uɐɔ ɟɟɐʇs sɔᴉsʎɥd ɹǝɥʇǝɥM",
   "gravitation.configuration.physics_staff_allowed_max_control_size": "ǝzᴉS ꞁoɹʇuoƆ xɐW pǝʍoꞁꞁⱯ ɟɟɐʇS sɔᴉsʎɥԀ",
   "gravitation.configuration.physics_staff_allowed_max_control_size.tooltip": "ꞁoɹʇuoɔ pǝʍoꞁꞁɐ ɟɟɐʇs sɔᴉsʎɥd ɹoɟ ǝzᴉs ɯnɯᴉxɐɯ ǝɥ⟘",
   "gravitation.configuration.redstone_mass_energy_converter_max_mass": "ssɐW xɐW ɹǝʇɹǝʌuoƆ ʎᵷɹǝuƎ ssɐW ǝuoʇspǝᴚ",

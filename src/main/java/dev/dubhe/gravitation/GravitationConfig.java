@@ -16,6 +16,8 @@ public class GravitationConfig {
     @Comment("The maximum size for physics staff allowed control")
     @BoundedDiscrete(min = 4096, max = 1073741824)
     public int physicsStaffAllowedMaxControlSize = 32768;
+    @Comment("Whether physics staff can lock sub-levels")
+    public boolean physicsStaffAllowLockSubLevel = false;
     @Comment("WindTunnel's Config")
     @CollapsibleObject
     public WindTunnelConfig windTunnel = new WindTunnelConfig();
