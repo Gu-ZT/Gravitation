@@ -30,6 +30,7 @@
   "gravitation.configuration.wind_tunnel.tooltip": "Wind Tunnel",
   "gravitation.diagram.export": "Export Contraption Diagram To PNG",
   "gravitation.diagram.export.failure": "Contraption diagram PNG export failed: %s",
+  "gravitation.diagram.export.none_enabled": "Export contraption diagram not enabled in config",
   "gravitation.diagram.export.success": "Exported %s contraption diagram image(s) to: %s",
   "gravitation.simulated_section.gravitation": "Gravitation",
   "item.gravitation.physics_staff": "Physics Staff",

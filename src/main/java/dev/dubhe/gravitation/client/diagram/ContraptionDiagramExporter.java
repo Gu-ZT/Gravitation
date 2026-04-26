@@ -11,6 +11,8 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexSorting;
+import dev.dubhe.gravitation.client.GravitationClient;
+import dev.dubhe.gravitation.client.GravitationClientConfig;
 import dev.ryanhcode.sable.companion.math.BoundingBox3ic;
 import dev.ryanhcode.sable.companion.math.Pose3dc;
 import dev.ryanhcode.sable.sublevel.ClientSubLevel;
@@ -19,10 +21,10 @@ import dev.simulated_team.simulated.content.entities.diagram.DiagramConfig;
 import dev.simulated_team.simulated.content.entities.diagram.screen.DiagramScreen;
 import dev.simulated_team.simulated.util.SimpleSubLevelGroupRenderer;
 import foundry.veil.api.client.render.VeilRenderSystem;
+import foundry.veil.api.client.render.framebuffer.AdvancedFbo;
 import foundry.veil.api.client.render.post.PostPipeline;
 import foundry.veil.api.client.render.post.PostProcessingManager;
 import net.createmod.catnip.theme.Color;
-import foundry.veil.api.client.render.framebuffer.AdvancedFbo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
@@ -35,9 +37,7 @@ import org.joml.Matrix4fStack;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 
-import java.awt.Font;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,6 +46,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.function.Predicate;
 
 public final class ContraptionDiagramExporter {
     private static final DateTimeFormatter FILE_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
@@ -77,16 +78,23 @@ public final class ContraptionDiagramExporter {
             final String baseName = sanitizeFileName(access.gravitation$getDiagramName());
             final String timestamp = FILE_TIME_FORMAT.format(LocalDateTime.now());
 
+            int exported = 0;
             for (ExportPreset preset : ExportPreset.values()) {
+                if (!preset.isEnabled()) continue;
                 final String fileName = baseName + "_" + timestamp + "_" + preset.fileSuffix + ".png";
                 exportSingle(access, preset, createUniqueFile(outputDirectory.resolve(fileName)));
+                exported++;
             }
 
-            notifyPlayer(Component.translatable(
-                "gravitation.diagram.export.success",
-                ExportPreset.values().length,
-                outputDirectory.toString()
-            ));
+            if (exported == 0) {
+                notifyPlayer(Component.translatable("gravitation.diagram.export.none_enabled"));
+            } else {
+                notifyPlayer(Component.translatable(
+                    "gravitation.diagram.export.success",
+                    exported,
+                    outputDirectory.toString()
+                ));
+            }
         } catch (Exception exception) {
             notifyPlayer(Component.translatable("gravitation.diagram.export.failure", exception.getMessage()));
         }
@@ -294,7 +302,9 @@ public final class ContraptionDiagramExporter {
         blendOnto(destination, overlay, 0, 0);
     }
 
-    /** Alpha 混合：将 overlay 按指定偏移叠加到 destination 上 */
+    /**
+     * Alpha 混合：将 overlay 按指定偏移叠加到 destination 上
+     */
     private static void blendOnto(NativeImage destination, NativeImage overlay, int offsetX, int offsetY) {
         final int width = Math.min(destination.getWidth(), overlay.getWidth());
         final int height = Math.min(destination.getHeight(), overlay.getHeight());
@@ -316,12 +326,14 @@ public final class ContraptionDiagramExporter {
                 }
 
                 final int target = destination.getPixelRGBA(targetX, targetY);
-                destination.setPixelRGBA(targetX, targetY, FastColor.ABGR32.color(
-                    blendChannel(sourceAlpha, 255, FastColor.ABGR32.alpha(target)),
-                    blendChannel(sourceAlpha, FastColor.ABGR32.blue(source), FastColor.ABGR32.blue(target)),
-                    blendChannel(sourceAlpha, FastColor.ABGR32.green(source), FastColor.ABGR32.green(target)),
-                    blendChannel(sourceAlpha, FastColor.ABGR32.red(source), FastColor.ABGR32.red(target))
-                ));
+                destination.setPixelRGBA(
+                    targetX, targetY, FastColor.ABGR32.color(
+                        blendChannel(sourceAlpha, 255, FastColor.ABGR32.alpha(target)),
+                        blendChannel(sourceAlpha, FastColor.ABGR32.blue(source), FastColor.ABGR32.blue(target)),
+                        blendChannel(sourceAlpha, FastColor.ABGR32.green(source), FastColor.ABGR32.green(target)),
+                        blendChannel(sourceAlpha, FastColor.ABGR32.red(source), FastColor.ABGR32.red(target))
+                    )
+                );
             }
         }
     }
@@ -350,7 +362,10 @@ public final class ContraptionDiagramExporter {
             RenderSystem.backupProjectionMatrix();
             projectionBackedUp = true;
 
-            RenderSystem.setProjectionMatrix(new Matrix4f().setOrtho(0.0F, layout.width(), layout.height(), 0.0F, -1.0F, 1.0F), VertexSorting.ORTHOGRAPHIC_Z);
+            RenderSystem.setProjectionMatrix(
+                new Matrix4f().setOrtho(0.0F, layout.width(), layout.height(), 0.0F, -1.0F, 1.0F),
+                VertexSorting.ORTHOGRAPHIC_Z
+            );
 
             final Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
             modelViewStack.pushMatrix();
@@ -428,9 +443,9 @@ public final class ContraptionDiagramExporter {
             for (int x = 0; x < image.getWidth(); x++) {
                 final int abgr = image.getPixelRGBA(x, y);
                 final int argb = (FastColor.ABGR32.alpha(abgr) << 24)
-                    | (FastColor.ABGR32.red(abgr) << 16)
-                    | (FastColor.ABGR32.green(abgr) << 8)
-                    | FastColor.ABGR32.blue(abgr);
+                                 | (FastColor.ABGR32.red(abgr) << 16)
+                                 | (FastColor.ABGR32.green(abgr) << 8)
+                                 | FastColor.ABGR32.blue(abgr);
                 buffered.setRGB(x, y, argb);
             }
         }
@@ -463,12 +478,14 @@ public final class ContraptionDiagramExporter {
         for (int y = 0; y < image.getHeight(); y++) {
             for (int x = 0; x < image.getWidth(); x++) {
                 final int argb = buffered.getRGB(x, y);
-                image.setPixelRGBA(x, y, FastColor.ABGR32.color(
-                    (argb >>> 24) & 0xFF,
-                    argb & 0xFF,
-                    (argb >>> 8) & 0xFF,
-                    (argb >>> 16) & 0xFF
-                ));
+                image.setPixelRGBA(
+                    x, y, FastColor.ABGR32.color(
+                        (argb >>> 24) & 0xFF,
+                        argb & 0xFF,
+                        (argb >>> 8) & 0xFF,
+                        (argb >>> 16) & 0xFF
+                    )
+                );
             }
         }
     }
@@ -504,7 +521,9 @@ public final class ContraptionDiagramExporter {
         return color | 0xFF000000;
     }
 
-    /** 最近邻放大：从 backgroundWidth×backgroundHeight 缩放到输出分辨率 */
+    /**
+     * 最近邻放大：从 backgroundWidth×backgroundHeight 缩放到输出分辨率
+     */
     private static NativeImage scaleImage(NativeImage source, int targetWidth, int targetHeight) {
         final NativeImage scaled = new NativeImage(targetWidth, targetHeight, true);
         final int srcW = source.getWidth();
@@ -577,10 +596,10 @@ public final class ContraptionDiagramExporter {
     }
 
     private enum ExportPreset {
-        RATIO_16_9("16x9", 1920, 1080, 448, 252, "diagram16_9"),
-        RATIO_4_3("4x3", 1920, 1440, 256, 192, "diagram4_3"),
-        RATIO_3_2("3x2", 1920, 1280, 384, 256, "diagram3_2"),
-        RATIO_1_1("1x1", 1920, 1920, 256, 256, "diagram1_1");
+        RATIO_16_9("16x9", 1920, 1080, 448, 252, "diagram16_9", cfg -> cfg.export16x9),
+        RATIO_4_3("4x3", 1920, 1440, 256, 192, "diagram4_3", cfg -> cfg.export4x3),
+        RATIO_3_2("3x2", 1920, 1280, 384, 256, "diagram3_2", cfg -> cfg.export3x2),
+        RATIO_1_1("1x1", 1920, 1920, 256, 256, "diagram1_1", cfg -> cfg.export1x1);
 
         private final String fileSuffix;
         private final int width;
@@ -588,14 +607,23 @@ public final class ContraptionDiagramExporter {
         private final int backgroundWidth;
         private final int backgroundHeight;
         private final ResourceLocation backgroundTexture;
+        private final Predicate<GravitationClientConfig.DiagramExportConfig> enabledGetter;
 
-        ExportPreset(String fileSuffix, int width, int height, int backgroundWidth, int backgroundHeight, String texturePath) {
+        ExportPreset(
+            String fileSuffix, int width, int height, int backgroundWidth, int backgroundHeight,
+            String texturePath, Predicate<GravitationClientConfig.DiagramExportConfig> enabledGetter
+        ) {
             this.fileSuffix = fileSuffix;
             this.width = width;
             this.height = height;
             this.backgroundWidth = backgroundWidth;
             this.backgroundHeight = backgroundHeight;
             this.backgroundTexture = ResourceLocation.fromNamespaceAndPath("gravitation", "textures/gui/" + texturePath + ".png");
+            this.enabledGetter = enabledGetter;
+        }
+
+        boolean isEnabled() {
+            return enabledGetter.test(GravitationClient.CONFIG.diagramExport);
         }
     }
 }
