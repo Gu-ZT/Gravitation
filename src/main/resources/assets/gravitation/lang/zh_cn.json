@@ -28,6 +28,8 @@
   "gravitation.configuration.wind_tunnel.max_range": "最大范围",
   "gravitation.configuration.wind_tunnel.max_range.tooltip": "风洞前方扫描的最大开放方块数量。",
   "gravitation.configuration.wind_tunnel.tooltip": "风洞",
+  "gravitation.diagram.export.failure": "结构图 PNG 导出失败：%s",
+  "gravitation.diagram.export.success": "已将 %s 张结构图导出到：%s",
   "gravitation.simulated_section.gravitation": "重力学",
   "item.gravitation.physics_staff": "物理手杖",
   "scroll_option.gravitation.max_mass": "最大质量"
