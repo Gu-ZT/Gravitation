@@ -34,6 +34,10 @@ import java.util.Locale;
 
 public final class ContraptionDiagramExporter {
     private static final DateTimeFormatter FILE_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+    private static final int SCENE_CLEAR_R = 48;
+    private static final int SCENE_CLEAR_G = 49;
+    private static final int SCENE_CLEAR_B = 51;
+    private static final int SCENE_CLEAR_TOLERANCE = 1;
 
     private ContraptionDiagramExporter() {
     }
@@ -89,8 +93,10 @@ public final class ContraptionDiagramExporter {
                 NativeImage titleOverlay = renderTitleOverlay(minecraft, preset, access.gravitation$getDiagramName());
                 NativeImage sceneOverlay = readTexture(finalFbo.getColorTextureAttachment(0).getId(), preset.width, preset.height)
             ) {
-                blendOnto(exportImage, titleOverlay);
+                stripSceneBackground(sceneOverlay);
+                stripBlackBackground(titleOverlay);
                 blendOnto(exportImage, sceneOverlay);
+                blendOnto(exportImage, titleOverlay);
                 exportImage.writeToFile(outputFile);
             }
         } finally {
@@ -250,6 +256,42 @@ public final class ContraptionDiagramExporter {
                         blendChannel(sourceAlpha, FastColor.ABGR32.red(source), FastColor.ABGR32.red(target))
                     )
                 );
+            }
+        }
+    }
+
+    private static void stripSceneBackground(NativeImage scene) {
+        for (int y = 0; y < scene.getHeight(); y++) {
+            for (int x = 0; x < scene.getWidth(); x++) {
+                final int pixel = scene.getPixelRGBA(x, y);
+                final int red = FastColor.ABGR32.red(pixel);
+                final int green = FastColor.ABGR32.green(pixel);
+                final int blue = FastColor.ABGR32.blue(pixel);
+
+                if (Math.abs(red - SCENE_CLEAR_R) <= SCENE_CLEAR_TOLERANCE
+                    && Math.abs(green - SCENE_CLEAR_G) <= SCENE_CLEAR_TOLERANCE
+                    && Math.abs(blue - SCENE_CLEAR_B) <= SCENE_CLEAR_TOLERANCE) {
+                    scene.setPixelRGBA(x, y, FastColor.ABGR32.color(0, blue, green, red));
+                }
+            }
+        }
+    }
+
+    private static void stripBlackBackground(NativeImage image) {
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                final int pixel = image.getPixelRGBA(x, y);
+                final int alpha = FastColor.ABGR32.alpha(pixel);
+                if (alpha == 0) {
+                    continue;
+                }
+
+                final int red = FastColor.ABGR32.red(pixel);
+                final int green = FastColor.ABGR32.green(pixel);
+                final int blue = FastColor.ABGR32.blue(pixel);
+                if (red <= 2 && green <= 2 && blue <= 2) {
+                    image.setPixelRGBA(x, y, FastColor.ABGR32.color(0, blue, green, red));
+                }
             }
         }
     }
