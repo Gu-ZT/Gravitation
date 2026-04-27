@@ -4,6 +4,7 @@ import dev.anvilcraft.lib.v2.config.ConfigData;
 import dev.anvilcraft.lib.v2.registrum.providers.RegistrumLangProvider;
 import dev.dubhe.gravitation.Gravitation;
 import dev.dubhe.gravitation.GravitationConfig;
+import dev.dubhe.gravitation.client.GravitationClientConfig;
 import net.minecraft.Util;
 
 public class LangHandler {
@@ -11,6 +12,7 @@ public class LangHandler {
         provider.add("gravitation.simulated_section.gravitation", "Gravitation");
         provider.add(Util.makeDescriptionId("scroll_option", Gravitation.location("max_mass")), "Max Mass");
         ConfigData.readConfigClass(provider, GravitationConfig.class);
+        ConfigData.readConfigClass(provider, GravitationClientConfig.class);
         provider.add("block.gravitation.fan_concentrator.goggles.title", "Duct Diagnostics");
         provider.add("block.gravitation.fan_concentrator.goggles.length", "Duct Length: %s");
         provider.add("block.gravitation.fan_concentrator.goggles.speed", "Wind Speed: %s");
