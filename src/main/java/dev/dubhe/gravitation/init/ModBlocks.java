@@ -3,8 +3,8 @@ package dev.dubhe.gravitation.init;
 import com.simibubi.create.AllBlocks;
 import dev.anvilcraft.lib.v2.registrum.providers.RegistrumRecipeProvider;
 import dev.anvilcraft.lib.v2.registrum.util.entry.BlockEntry;
-import dev.dubhe.gravitation.block.RedstoneMassEnergyConverterBlock;
 import dev.dubhe.gravitation.block.FanConcentratorBlock;
+import dev.dubhe.gravitation.block.RedstoneMassEnergyConverterBlock;
 import dev.eriksonn.aeronautics.index.AeroItems;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
@@ -65,6 +65,9 @@ public class ModBlocks {
             .sound(SoundType.COPPER)
             .noOcclusion()
             .requiresCorrectToolForDrops()
+        )
+        .blockstate((ctx, provider) -> provider
+            .directionalBlock(ctx.get(), provider.models().getExistingFile(ctx.getId().withPrefix("block/")))
         )
         .simpleItem()
         .recipe((context, provider) -> ShapedRecipeBuilder

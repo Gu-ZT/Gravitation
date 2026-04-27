@@ -4,6 +4,8 @@
   "block.gravitation.fan_concentrator.goggles.speed": "%s :pǝǝdS puᴉM",
   "block.gravitation.fan_concentrator.goggles.title": "sɔᴉʇsouᵷɐᴉᗡ ʇɔnᗡ",
   "block.gravitation.redstone_mass_energy_converter": "ɹǝʇɹǝʌuoƆ ʎᵷɹǝuƎ ssɐW ǝuoʇspǝᴚ",
+  "gravitation.configuration.handle_reaction_force_multiplier": "ɹǝᴉꞁdᴉʇꞁnW ǝɔɹoℲ uoᴉʇɔɐǝᴚ ǝꞁpuɐH",
+  "gravitation.configuration.handle_reaction_force_multiplier.tooltip": "˙ǝꞁqɐsᴉp oʇ 0 oʇ ʇǝS ˙ꞁǝʌǝꞀqnS ɹǝɥʇouɐ ǝʌoɯ oʇ (ʞɔᴉꞁɔ-ʇɥᵷᴉɹ+ʇɟᴉɥs) ǝꞁpuɐɥ ɐ ᵷuᴉsn uǝɥʍ uo spuɐʇs ɹǝʎɐꞁd ɐ ꞁǝʌǝꞀqnS ǝɥʇ oʇ pǝᴉꞁddɐ ɹǝᴉꞁdᴉʇꞁnɯ ǝɔɹoɟ uoᴉʇɔɐǝᴚ",
   "gravitation.configuration.physics_staff_allow_lock_sub_level": "ꞁǝʌǝꞀ qnS ʞɔoꞀ ʍoꞁꞁⱯ ɟɟɐʇS sɔᴉsʎɥԀ",
   "gravitation.configuration.physics_staff_allow_lock_sub_level.tooltip": "sꞁǝʌǝꞁ-qns ʞɔoꞁ uɐɔ ɟɟɐʇs sɔᴉsʎɥd ɹǝɥʇǝɥM",
   "gravitation.configuration.physics_staff_allowed_max_control_size": "ǝzᴉS ꞁoɹʇuoƆ xɐW pǝʍoꞁꞁⱯ ɟɟɐʇS sɔᴉsʎɥԀ",

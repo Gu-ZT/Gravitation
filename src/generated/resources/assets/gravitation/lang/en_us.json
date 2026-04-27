@@ -4,6 +4,8 @@
   "block.gravitation.fan_concentrator.goggles.speed": "Wind Speed: %s",
   "block.gravitation.fan_concentrator.goggles.title": "Duct Diagnostics",
   "block.gravitation.redstone_mass_energy_converter": "Redstone Mass Energy Converter",
+  "gravitation.configuration.handle_reaction_force_multiplier": "Handle Reaction Force Multiplier",
+  "gravitation.configuration.handle_reaction_force_multiplier.tooltip": "Reaction force multiplier applied to the SubLevel a player stands on when using a handle (shift+right-click) to move another SubLevel. Set to 0 to disable.",
   "gravitation.configuration.physics_staff_allow_lock_sub_level": "Physics Staff Allow Lock Sub Level",
   "gravitation.configuration.physics_staff_allow_lock_sub_level.tooltip": "Whether physics staff can lock sub-levels",
   "gravitation.configuration.physics_staff_allowed_max_control_size": "Physics Staff Allowed Max Control Size",

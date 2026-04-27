@@ -1,7 +1,30 @@
 {
   "variants": {
-    "": {
+    "facing=down": {
+      "model": "gravitation:block/fan_concentrator",
+      "x": 180
+    },
+    "facing=east": {
+      "model": "gravitation:block/fan_concentrator",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north": {
+      "model": "gravitation:block/fan_concentrator",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "gravitation:block/fan_concentrator",
+      "x": 90,
+      "y": 180
+    },
+    "facing=up": {
       "model": "gravitation:block/fan_concentrator"
+    },
+    "facing=west": {
+      "model": "gravitation:block/fan_concentrator",
+      "x": 90,
+      "y": 270
     }
   }
 }

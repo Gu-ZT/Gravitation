@@ -4,6 +4,8 @@
   "block.gravitation.fan_concentrator.goggles.speed": "风速: %s",
   "block.gravitation.fan_concentrator.goggles.title": "管道诊断",
   "block.gravitation.redstone_mass_energy_converter": "红石质能转换装置",
+  "gravitation.configuration.handle_reaction_force_multiplier": "反作用力系数",
+  "gravitation.configuration.handle_reaction_force_multiplier.tooltip": "当玩家使用“Shift + 右键”操作把手来移动另一个物理结构时，会作用于该玩家所站立的物理结构的反作用力倍数。将其设置为0即可禁用该效果",
   "gravitation.configuration.physics_staff_allow_lock_sub_level": "允许物理手杖锁定物理结构",
   "gravitation.configuration.physics_staff_allow_lock_sub_level.tooltip": "是否允许物理手杖执行锁定物理结构操作",
   "gravitation.configuration.physics_staff_allowed_max_control_size": "物理手杖允许的最大控制尺寸",
