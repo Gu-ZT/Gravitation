@@ -18,6 +18,9 @@ public class GravitationConfig {
     public int physicsStaffAllowedMaxControlSize = 32768;
     @Comment("Whether physics staff can lock sub-levels")
     public boolean physicsStaffAllowLockSubLevel = false;
+    @Comment("Reaction force multiplier applied to the SubLevel a player stands on when using a handle (shift+right-click) to move another SubLevel. Set to 0 to disable.")
+    @BoundedDiscrete(min = 0.0, max = 10.0)
+    public double handleReactionForceMultiplier = 1.0;
     @Comment("WindTunnel's Config")
     @CollapsibleObject
     public WindTunnelConfig windTunnel = new WindTunnelConfig();
