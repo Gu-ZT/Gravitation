@@ -97,7 +97,7 @@ public class HandleBlockEntityConstraintMixin {
 
         // Impulse magnitude proportional to spring displacement (stiffness from HandleConstraint) * multiplier
         // Converted to standing SubLevel's local frame via inverse normal transform
-        reactionDir.normalize().mul(displacement * 1.25 * multiplier);
+        reactionDir.normalize().mul(displacement * 2.2 * multiplier);
         final Vector3d localReactionDir = serverStandingSubLevel.logicalPose()
             .transformNormalInverse(reactionDir);
 

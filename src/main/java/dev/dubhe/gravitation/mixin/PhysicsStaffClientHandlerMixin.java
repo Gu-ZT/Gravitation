@@ -12,15 +12,16 @@ import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.entity_collision.SubLevelEntityCollision;
 import dev.simulated_team.simulated.content.physics_staff.PhysicsStaffAction;
 import dev.simulated_team.simulated.content.physics_staff.PhysicsStaffClientHandler;
-import net.minecraft.core.BlockPos;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
 import org.joml.Vector3d;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import javax.annotation.Nullable;
@@ -98,8 +99,11 @@ public abstract class PhysicsStaffClientHandlerMixin {
             return;
         }
 
-        if (this.gravitation$isPlayerCollidingWithAnySubLevel(player)
-            || this.gravitation$isPlayerStandingOnAnySubLevel(player)) {
+        if (
+            this.gravitation$isEntityCollidingWithAnySubLevel(player)
+            || this.gravitation$isEntityStandingOnAnySubLevel(player)
+            || this.gravitation$isEntityRidingOnAnySubLevel(player)
+        ) {
             this.gravitation$invokeStopDragging();
             player.stopUsingItem();
         }
@@ -108,8 +112,11 @@ public abstract class PhysicsStaffClientHandlerMixin {
     @Unique
     private boolean gravitation$onItemUsedUtil(boolean original, LocalPlayer player, SubLevel subLevel) {
         if (!player.getMainHandItem().is(ModItems.PHYSICS_STAFF) && !player.getOffhandItem().is(ModItems.PHYSICS_STAFF)) return original;
-        if (this.gravitation$isPlayerCollidingWithAnySubLevel(player)
-            || this.gravitation$isPlayerStandingOnAnySubLevel(player)) {
+        if (
+            this.gravitation$isEntityCollidingWithAnySubLevel(player)
+            || this.gravitation$isEntityStandingOnAnySubLevel(player)
+            || this.gravitation$isEntityRidingOnAnySubLevel(player)
+        ) {
             player.stopUsingItem();
             return false;
         }
@@ -121,21 +128,34 @@ public abstract class PhysicsStaffClientHandlerMixin {
 
     @Unique
     @SuppressWarnings("UnstableApiUsage")
-    private boolean gravitation$isPlayerCollidingWithAnySubLevel(LocalPlayer player) {
-        if (!(player instanceof EntityMovementExtension movementExtension)) {
+    private boolean gravitation$isEntityCollidingWithAnySubLevel(Entity entity) {
+        if (!(entity instanceof EntityMovementExtension movementExtension)) {
             return false;
         }
 
         SubLevelEntityCollision.CollisionInfo collisionInfo = movementExtension.sable$getCollisionInfo();
         return collisionInfo != null
-               && ((collisionInfo.firstCollisions != null && !collisionInfo.firstCollisions.isEmpty())
-                   || collisionInfo.subLevelHorizontalCollision);
+               && (
+                   (collisionInfo.firstCollisions != null && !collisionInfo.firstCollisions.isEmpty())
+                   || collisionInfo.subLevelHorizontalCollision
+               );
     }
 
     @Unique
-    private boolean gravitation$isPlayerStandingOnAnySubLevel(LocalPlayer player) {
-        BlockPos onPos = player.getOnPos();
-        return Sable.HELPER.getContaining(player.level(), onPos) != null
-               || Sable.HELPER.getTrackingOrVehicleSubLevel(player) != null;
+    private boolean gravitation$isEntityStandingOnAnySubLevel(Entity entity) {
+        BlockPos onPos = entity.getOnPos();
+        return Sable.HELPER.getContaining(entity.level(), onPos) != null
+               || Sable.HELPER.getTrackingOrVehicleSubLevel(entity) != null;
+    }
+
+    @Unique
+    private boolean gravitation$isEntityRidingOnAnySubLevel(Entity entity) {
+        Entity entity1 = entity;
+        if ((entity1 = entity1.getVehicle()) != null) {
+            return this.gravitation$isEntityCollidingWithAnySubLevel(entity1)
+                   || this.gravitation$isEntityStandingOnAnySubLevel(entity1)
+                   || this.gravitation$isEntityRidingOnAnySubLevel(entity1);
+        }
+        return false;
     }
 }
