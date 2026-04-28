@@ -1,21 +1,21 @@
 package dev.dubhe.gravitation.block.entity;
 
-import com.simibubi.create.infrastructure.config.AllConfigs;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.content.kinetics.fan.AirCurrent;
 import com.simibubi.create.content.kinetics.fan.AirFlowParticleData;
 import com.simibubi.create.content.kinetics.fan.IAirCurrentSource;
 import com.simibubi.create.foundation.blockEntity.SyncedBlockEntity;
+import com.simibubi.create.infrastructure.config.AllConfigs;
 import dev.dubhe.gravitation.block.FanConcentratorBlock;
 import dev.dubhe.gravitation.windtunnel.WindTunnelFlowField;
 import dev.dubhe.gravitation.windtunnel.WindTunnelNetwork;
 import dev.dubhe.gravitation.windtunnel.WindTunnelWindProvider;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.ChatFormatting;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -24,7 +24,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
-
 import javax.annotation.Nullable;
 
 public class FanConcentratorBlockEntity extends SyncedBlockEntity implements IAirCurrentSource, IHaveGoggleInformation {
@@ -166,7 +165,10 @@ public class FanConcentratorBlockEntity extends SyncedBlockEntity implements IAi
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         this.refreshAirCurrentIfNeeded();
-        tooltip.add(Component.translatable("block.gravitation.fan_concentrator.goggles.title").withStyle(ChatFormatting.GRAY));
+        tooltip.add(
+            Component.literal("    ")
+                .append(Component.translatable("block.gravitation.fan_concentrator.goggles.title").withStyle(ChatFormatting.GRAY))
+        );
 
         double length = 0.0F;
         double windSpeed = 0.0F;
@@ -184,10 +186,20 @@ public class FanConcentratorBlockEntity extends SyncedBlockEntity implements IAi
             }
         }
 
-        tooltip.add(Component.translatable("block.gravitation.fan_concentrator.goggles.length", String.format("%.2f", length))
-            .withStyle(ChatFormatting.AQUA));
-        tooltip.add(Component.translatable("block.gravitation.fan_concentrator.goggles.speed", String.format("%.2f", windSpeed))
-            .withStyle(ChatFormatting.AQUA));
+        tooltip.add(
+            Component.literal("    ")
+                .append(
+                    Component.translatable("block.gravitation.fan_concentrator.goggles.length", String.format("%.2f", length))
+                        .withStyle(ChatFormatting.AQUA)
+                )
+        );
+        tooltip.add(
+            Component.literal("    ")
+                .append(
+                    Component.translatable("block.gravitation.fan_concentrator.goggles.speed", String.format("%.2f", windSpeed))
+                        .withStyle(ChatFormatting.AQUA)
+                )
+        );
         return true;
     }
 
