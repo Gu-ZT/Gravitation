@@ -132,19 +132,33 @@ public final class WindTunnelWindProvider {
             );
             TrackedTunnel[] candidateTunnels = this.chunkIndex.get(sampleChunk);
             if (candidateTunnels != null && candidateTunnels.length != 0) {
-                Vector3d total = null;
+                // Group by signed flow direction (e.g. +X group and -X group are separate).
+                // Within each group, only the strongest tunnel wins (no same-direction stacking).
+                // Groups on opposite signed axes are then summed as vectors, allowing cancellation.
+                // Orthogonal groups likewise sum as vectors for correct combined thrust.
+                // Since Minecraft Directions are always axis-aligned, each tunnel contributes
+                // along exactly one axis with one sign.
+                double posX = 0.0, negX = 0.0;
+                double posY = 0.0, negY = 0.0;
+                double posZ = 0.0, negZ = 0.0;
+                boolean found = false;
+                Vector3d temp = new Vector3d();
 
                 for (TrackedTunnel tunnel : candidateTunnels) {
                     if (tunnel.contains(sampleX, sampleY, sampleZ)) {
-                        if (total == null) {
-                            total = new Vector3d();
-                        }
-
-                        tunnel.accumulate(sampleX, sampleY, sampleZ, total);
+                        temp.set(0.0, 0.0, 0.0);
+                        tunnel.accumulate(sampleX, sampleY, sampleZ, temp);
+                        if (temp.x > posX) posX = temp.x;
+                        if (temp.x < negX) negX = temp.x;
+                        if (temp.y > posY) posY = temp.y;
+                        if (temp.y < negY) negY = temp.y;
+                        if (temp.z > posZ) posZ = temp.z;
+                        if (temp.z < negZ) negZ = temp.z;
+                        found = true;
                     }
                 }
 
-                return total;
+                return found ? new Vector3d(posX + negX, posY + negY, posZ + negZ) : null;
             } else {
                 return null;
             }
