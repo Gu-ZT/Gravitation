@@ -97,7 +97,7 @@ public class RedstoneMassEnergyConverterBlockEntity extends SmartBlockEntity {
                 }
             }
         }
-        super.setRemoved();
+        super.remove();
     }
 
     @Override
