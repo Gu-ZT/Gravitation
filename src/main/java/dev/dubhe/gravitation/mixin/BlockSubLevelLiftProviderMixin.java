@@ -12,17 +12,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-
 @Mixin(BlockSubLevelLiftProvider.class)
 public interface BlockSubLevelLiftProviderMixin {
-
-    /** 记录当前 tick 内已应用过风场的 SubLevel，防止多帆叠加 */
-    Set<ServerSubLevel> WIND_APPLIED_THIS_TICK = new HashSet<>();
-    AtomicLong LAST_WIND_TICK = new AtomicLong(-1L);
-
     @Inject(
         method = "sable$contributeLiftAndDrag",
         at = @At(
@@ -44,11 +35,11 @@ public interface BlockSubLevelLiftProviderMixin {
         CallbackInfo ci
     ) {
         long tick = subLevel.getLevel().getGameTime();
-        if (tick != LAST_WIND_TICK.get()) {
-            WIND_APPLIED_THIS_TICK.clear();
-            LAST_WIND_TICK.set(tick);
+        if (tick != BlockSubLevelLiftProviderMixin$Sub.gravitation$LAST_WIND_TICK.get()) {
+            BlockSubLevelLiftProviderMixin$Sub.gravitation$WIND_APPLIED_THIS_TICK.clear();
+            BlockSubLevelLiftProviderMixin$Sub.gravitation$LAST_WIND_TICK.set(tick);
         }
-        if (!WIND_APPLIED_THIS_TICK.add(subLevel)) {
+        if (!BlockSubLevelLiftProviderMixin$Sub.gravitation$WIND_APPLIED_THIS_TICK.add(subLevel)) {
             return; // 本 tick 已为该 SubLevel 应用过风场，跳过
         }
 

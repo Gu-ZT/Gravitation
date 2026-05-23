@@ -80,6 +80,36 @@ public class RedstoneMassEnergyConverterBlockEntity extends SmartBlockEntity {
     }
 
     @Override
+    public void remove() {
+        // 方块被移除（包括起重机移动时的临时移除），清理 MassTracker 中的质量记录
+        if (this.level != null && !this.level.isClientSide) {
+            final SubLevel subLevel = Sable.HELPER.getContaining(this.level, this.getBlockPos());
+            if (subLevel instanceof final ServerSubLevel serverSubLevel) {
+                final MassTracker massTracker = serverSubLevel.getSelfMassTracker();
+                final double mass = this.getMass();
+                if (mass > 0) {
+                    final BlockState state = this.getBlockState();
+                    final Vec3 inertia = state.isAir()
+                        ? null
+                        : PhysicsBlockPropertyHelper.getInertia(this.level, this.getBlockPos(), state);
+                    massTracker.addBlockMass(this.level, state, this.getBlockPos(), -mass, inertia);
+                    serverSubLevel.updateMergedMassData(1.0f);
+                }
+            }
+        }
+        super.setRemoved();
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        // 方块被起重机移动后重新加载到 SubLevel 时，兜底注册质量
+        if (this.level != null && !this.level.isClientSide) {
+            this.updateMass();
+        }
+    }
+
+    @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         this.maxConverterValue = new ScrollValueBehaviour(
             SCROLL_OPTION_TITLE,
